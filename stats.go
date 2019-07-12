@@ -1,56 +1,90 @@
 package main
 
-type RuleStat struct {
-	name    string
-	tag     int
-	counter uint64
-	latency uint64
-}
+import (
+	"strconv"
+	"strings"
+)
 
-func NewRuleStat(name string, tag int, counter uint64, latency uint64) *RuleStat {
-	r := new(RuleStat)
-
-	r.name = name
-	r.tag = tag
-	r.counter = counter
-	r.latency = latency
-
-	return r
+type Falcostats struct {
+	StartTime     uint64
+	EndTime       uint64
+	UnbrokenRules []RuleStat
+	BrokenRules   []RuleStat
+	FuncStats     []FuncStat
+	CounterStats  []CounterStat
 }
 
 type FuncStat struct {
-	name    string
-	counter uint64
-	latency uint64
+	Name    string
+	Counter uint64
+	Latency uint64
 }
 
-func NewFuncStat(name string, counter uint64, latency uint64) *FuncStat {
+type CounterStat struct {
+	Name    string
+	Counter uint64
+}
+
+type RuleStat struct {
+	Name    string
+	Tag     int
+	Counter uint64
+	Latency uint64
+}
+
+func NewFuncStat(line string) *FuncStat {
 	f := new(FuncStat)
 
-	f.name = name
-	f.counter = counter
-	f.latency = latency
+	line = strings.Replace(line, "\n", "", 1)
+
+	tracerLine := strings.Split(line, "-")
+
+	name := tracerLine[1]
+	counter, _ := strconv.ParseUint(tracerLine[2], 10, 64)
+	latency, _ := strconv.ParseUint(tracerLine[3], 10, 64)
+
+	f.Name = name
+	f.Counter = counter
+	f.Latency = latency
 
 	return f
 }
 
-type CounterStat struct {
-	name    string
-	counter uint64
-}
-
-func NewCounterStat(name string, counter uint64) *CounterStat {
+func NewCounterStat(line string) *CounterStat {
 	c := new(CounterStat)
 
-	c.name = name
-	c.counter = counter
+	line = strings.Replace(line, "\n", "", 1)
+
+	tracerLine := strings.Split(line, "-")
+
+	name := tracerLine[1]
+	counter, _ := strconv.ParseUint(tracerLine[2], 10, 64)
+
+	c.Name = name
+	c.Counter = counter
 
 	return c
 }
 
-type Falcostats struct {
-	unbrokenRules []RuleStat
-	brokenRules   []RuleStat
-	funcStats     []FuncStat
-	counterStats  []CounterStat
+func NewRuleStat(line string, ra *RulesAggregator) *RuleStat {
+	// placeholder, feature to implement
+	tag := 0
+
+	r := new(RuleStat)
+
+	line = strings.Replace(line, "\n", "", 1)
+
+	tracerLine := strings.Split(line, "-")
+
+	id, _ := strconv.Atoi(tracerLine[1])
+	counter, _ := strconv.ParseUint(tracerLine[2], 10, 64)
+	latency, _ := strconv.ParseUint(tracerLine[3], 10, 64)
+	name := ra.getRuleNameById(id)
+
+	r.Name = name
+	r.Tag = tag
+	r.Counter = counter
+	r.Latency = latency
+
+	return r
 }

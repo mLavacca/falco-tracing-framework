@@ -2,13 +2,18 @@ package main
 
 import (
 	"fmt"
+	"log"
+	"os"
+	"strconv"
 	"time"
 )
 
 func main() {
 
-	// placeholder to modify in the future (get parameter from command line or something else)
-	t := time.Duration(4)
+	t, err := strconv.Atoi(os.Args[2])
+	if err != nil {
+		log.Fatal("error, time parameter missing")
+	}
 
 	ch := make(chan StatsAggregator)
 
@@ -18,12 +23,17 @@ func main() {
 
 	falcoTracer.loadRulesFromFalco()
 
-	go falcoTracer.loadStatsFromFalco(t, ch)
+	falcoTracer.flushFalcoData()
+
+	go falcoTracer.loadStatsFromFalco(time.Duration(t), ch)
 
 	for {
 		sa := <-ch
-		jsonStats := jsonifyFalcoStats(sa)
+		jsonStats, err := sa.MarshalJSON()
+		if err != nil {
+			log.Fatal("error in object marshaling")
+		}
 
-		fmt.Println(jsonStats)
+		fmt.Print(string(jsonStats), "\n\n")
 	}
 }

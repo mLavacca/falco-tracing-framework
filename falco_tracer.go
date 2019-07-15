@@ -25,7 +25,7 @@ func NewFalcoTracer() *FalcoTracer {
 
 	f.falcoInterface = NewFalcoInterface(falcoPid, "/tmp/tracer_pipe_"+os.Args[1])
 	f.statsAggregator = new(StatsAggregator)
-	f.rulesAggregator = new(RulesAggregator)
+	f.rulesAggregator = NewRulesAggregator()
 
 	return f
 }
@@ -57,8 +57,14 @@ func (f *FalcoTracer) loadRulesFromFalco() {
 	}
 }
 
+func (f *FalcoTracer) flushFalcoData() {
+	f.falcoInterface.sendSigFlushData()
+}
+
 func (f *FalcoTracer) loadStatsFromFalco(t time.Duration, ch chan (StatsAggregator)) {
 	for {
+		time.Sleep(t * time.Second)
+
 		f.falcoInterface.sendSigRcvSummary()
 
 		for {
@@ -97,7 +103,6 @@ func (f *FalcoTracer) loadStatsFromFalco(t time.Duration, ch chan (StatsAggregat
 		}
 
 		ch <- *f.statsAggregator
-		time.Sleep(t * time.Second)
 	}
 }
 
@@ -109,9 +114,9 @@ func (f *FalcoTracer) getFunctionLatencies() {
 			break
 		}
 
-		fs := NewFuncStat(line)
+		name, fs := NewFuncStat(line)
 
-		f.statsAggregator.addFuncStat(*fs)
+		f.statsAggregator.addFuncStat(name, *fs)
 	}
 }
 
@@ -123,8 +128,9 @@ func (f *FalcoTracer) getCounters() {
 			break
 		}
 
-		cs := NewCounterStat(line)
-		f.statsAggregator.addCounterStat(*cs)
+		name, cs := NewCounterStat(line)
+
+		f.statsAggregator.addCounterStat(name, *cs)
 	}
 }
 
@@ -137,8 +143,8 @@ func (f *FalcoTracer) getUnbrokenRules() {
 			break
 		}
 
-		ur := NewRuleStat(line, f.rulesAggregator)
-		f.statsAggregator.addUnbrokenRuleStat(*ur)
+		name, ur := NewRuleStat(line, f.rulesAggregator)
+		f.statsAggregator.addUnbrokenRuleStat(name, *ur)
 	}
 }
 
@@ -151,8 +157,8 @@ func (f *FalcoTracer) getBrokenRules() {
 			break
 		}
 
-		br := NewRuleStat(line, f.rulesAggregator)
-		f.statsAggregator.addBrokenRuleStat(*br)
+		name, br := NewRuleStat(line, f.rulesAggregator)
+		f.statsAggregator.addBrokenRuleStat(name, *br)
 	}
 }
 

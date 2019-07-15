@@ -1,11 +1,13 @@
 package main
 
+import "encoding/json"
+
 type StatsAggregator struct {
-	Fs []*Falcostats
+	Fs []*Falcostats `json:"falco statistics"`
 }
 
 func (s *StatsAggregator) addFalcoStats(start uint64, end uint64) {
-	f := new(Falcostats)
+	f := NewFalcoStats()
 
 	f.StartTime = start
 	f.EndTime = end
@@ -13,26 +15,31 @@ func (s *StatsAggregator) addFalcoStats(start uint64, end uint64) {
 	s.Fs = append(s.Fs, f)
 }
 
-func (s *StatsAggregator) addFuncStat(f FuncStat) {
+func (s *StatsAggregator) addFuncStat(n string, f FuncStat) {
 	fs := s.Fs[len(s.Fs)-1]
 
-	fs.FuncStats = append(fs.FuncStats, f)
+	fs.addFuncStat(n, f)
 }
 
-func (s *StatsAggregator) addCounterStat(cs CounterStat) {
+func (s *StatsAggregator) addCounterStat(n string, cs CounterStat) {
 	fs := s.Fs[len(s.Fs)-1]
 
-	fs.CounterStats = append(fs.CounterStats, cs)
+	fs.addCounterStat(n, cs)
 }
 
-func (s *StatsAggregator) addUnbrokenRuleStat(r RuleStat) {
+func (s *StatsAggregator) addUnbrokenRuleStat(n string, r RuleStat) {
 	fs := s.Fs[len(s.Fs)-1]
 
-	fs.UnbrokenRules = append(fs.UnbrokenRules, r)
+	fs.addUnbrokenRule(n, r)
 }
 
-func (s *StatsAggregator) addBrokenRuleStat(r RuleStat) {
+func (s *StatsAggregator) addBrokenRuleStat(n string, r RuleStat) {
 	fs := s.Fs[len(s.Fs)-1]
 
-	fs.BrokenRules = append(fs.BrokenRules, r)
+	fs.addBrokenRule(n, r)
+}
+
+func (s *StatsAggregator) MarshalJSON() ([]byte, error) {
+	type StatsAlias StatsAggregator
+	return json.Marshal((*StatsAlias)(s))
 }

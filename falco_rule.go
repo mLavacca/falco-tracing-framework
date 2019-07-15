@@ -6,9 +6,9 @@ import (
 )
 
 type FalcoRule struct {
-	id   int
-	name string
-	tag  int
+	Id   int
+	Name string
+	Tag  int
 }
 
 func NewRule(line string) *FalcoRule {
@@ -23,8 +23,9 @@ func NewRule(line string) *FalcoRule {
 	name := tracerLine[1]
 
 	r := new(FalcoRule)
-	r.id = id
-	r.name = name
+
+	r.Id = id
+	r.Name = name
 
 	return r
 }

@@ -1,21 +1,26 @@
 package main
 
 type RulesAggregator struct {
-	falcoRules map[int]FalcoRule
+	NRules     int               `json:"# of rules"`
+	FalcoRules map[int]FalcoRule `json:"falco rules"`
 }
 
 func NewRulesAggregator() *RulesAggregator {
 	r := new(RulesAggregator)
 
-	r.falcoRules = make(map[int]FalcoRule)
+	r.FalcoRules = make(map[int]FalcoRule)
 
 	return r
 }
 
 func (r *RulesAggregator) addRule(rule FalcoRule) {
-	r.falcoRules[rule.Id] = rule
+	r.FalcoRules[rule.Id] = rule
 }
 
 func (r *RulesAggregator) getRuleById(id int) FalcoRule {
-	return r.falcoRules[id]
+	return r.FalcoRules[id]
+}
+
+func (r *RulesAggregator) setNRules() {
+	r.NRules = len(r.FalcoRules)
 }

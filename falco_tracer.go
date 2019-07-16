@@ -1,14 +1,17 @@
 package main
 
 import (
+	"encoding/json"
 	"log"
 	"os"
 	"strconv"
 	"strings"
+	"sync"
 	"time"
 )
 
 type FalcoTracer struct {
+	exitFlag        bool
 	falcoGateway    *FalcoGateway
 	statsAggregator *StatsAggregator
 	rulesAggregator *RulesAggregator
@@ -55,14 +58,16 @@ func (f *FalcoTracer) loadRulesFromFalco() {
 
 		f.rulesAggregator.addRule(*r)
 	}
+
+	f.rulesAggregator.setNRules()
 }
 
 func (f *FalcoTracer) flushFalcoData() {
 	f.falcoGateway.sendSigFlushData()
 }
 
-func (f *FalcoTracer) loadStatsFromFalco(t time.Duration, ch chan (StatsAggregator)) {
-	for {
+func (f *FalcoTracer) loadStatsFromFalco(t time.Duration, wg *sync.WaitGroup) {
+	for f.exitFlag == false {
 		time.Sleep(t * time.Second)
 
 		f.falcoGateway.sendSigRcvSummary()
@@ -101,9 +106,11 @@ func (f *FalcoTracer) loadStatsFromFalco(t time.Duration, ch chan (StatsAggregat
 				break
 			}
 		}
-
-		ch <- *f.statsAggregator
 	}
+
+	f.statsAggregator.setTimes()
+
+	wg.Done()
 }
 
 func (f *FalcoTracer) getFunctionLatencies() {
@@ -172,4 +179,14 @@ func getTimesFromMessage(line string) (uint64, uint64) {
 	end, _ := strconv.ParseUint(tracerLine[3], 10, 64)
 
 	return start, end
+}
+
+func (f *FalcoTracer) MarshalJSON() ([]byte, error) {
+	return json.Marshal(&struct {
+		Stats StatsAggregator `json:"statistics"`
+		Rules RulesAggregator `json:"rules"`
+	}{
+		Stats: *f.statsAggregator,
+		Rules: *f.rulesAggregator,
+	})
 }

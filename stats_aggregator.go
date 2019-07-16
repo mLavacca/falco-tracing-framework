@@ -1,9 +1,9 @@
 package main
 
-import "encoding/json"
-
 type StatsAggregator struct {
-	Fs []*Falcostats `json:"falco statistics"`
+	StartTime uint64        `json:"start time"`
+	EndTime   uint64        `json:"end time"`
+	Fs        []*Falcostats `json:"falco statistics"`
 }
 
 func (s *StatsAggregator) addFalcoStats(start uint64, end uint64) {
@@ -39,8 +39,10 @@ func (s *StatsAggregator) addBrokenRuleStat(n string, r RuleStat) {
 	fs.addBrokenRule(n, r)
 }
 
-func (s *StatsAggregator) MarshalJSON() ([]byte, error) {
-	type StatsAlias StatsAggregator
+func (s *StatsAggregator) setTimes() {
+	fsStart := s.Fs[0]
+	fsEnd := s.Fs[len(s.Fs)-1]
 
-	return json.Marshal((*StatsAlias)(s))
+	s.StartTime = fsStart.StartTime
+	s.EndTime = fsEnd.EndTime
 }

@@ -81,12 +81,14 @@ func NewRuleStat(line string, ra *RulesAggregator) (string, *RuleStat) {
 	tracerLine := strings.Split(line, "-")
 
 	id, _ := strconv.Atoi(tracerLine[1])
-	counter, _ := strconv.ParseUint(tracerLine[2], 10, 64)
-	latency, _ := strconv.ParseUint(tracerLine[3], 10, 64)
+	tag, _ := strconv.Atoi(tracerLine[2])
+	counter, _ := strconv.ParseUint(tracerLine[3], 10, 64)
+	latency, _ := strconv.ParseUint(tracerLine[4], 10, 64)
+
 	rule := ra.getRuleById(id)
 
 	r.Id = rule.Id
-	r.Tag = rule.Tag
+	r.Tag = tag
 	r.Counter = counter
 	r.Latency = latency
 

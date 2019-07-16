@@ -41,5 +41,6 @@ func (s *StatsAggregator) addBrokenRuleStat(n string, r RuleStat) {
 
 func (s *StatsAggregator) MarshalJSON() ([]byte, error) {
 	type StatsAlias StatsAggregator
+
 	return json.Marshal((*StatsAlias)(s))
 }

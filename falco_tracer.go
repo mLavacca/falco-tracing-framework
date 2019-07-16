@@ -9,7 +9,7 @@ import (
 )
 
 type FalcoTracer struct {
-	falcoInterface  *FalcoInterface
+	falcoGateway    *FalcoGateway
 	statsAggregator *StatsAggregator
 	rulesAggregator *RulesAggregator
 }
@@ -23,7 +23,7 @@ func NewFalcoTracer() *FalcoTracer {
 
 	f := new(FalcoTracer)
 
-	f.falcoInterface = NewFalcoInterface(falcoPid, "/tmp/tracer_pipe_"+os.Args[1])
+	f.falcoGateway = NewFalcoGateway(falcoPid, "/tmp/tracer_pipe_"+os.Args[1])
 	f.statsAggregator = new(StatsAggregator)
 	f.rulesAggregator = NewRulesAggregator()
 
@@ -31,14 +31,14 @@ func NewFalcoTracer() *FalcoTracer {
 }
 
 func (f *FalcoTracer) setupConnection() {
-	f.falcoInterface.OpenPipe()
+	f.falcoGateway.OpenPipe()
 }
 
 func (f *FalcoTracer) loadRulesFromFalco() {
-	f.falcoInterface.sendSigRcvRulesNames()
+	f.falcoGateway.sendSigRcvRulesNames()
 
 	for {
-		line := f.falcoInterface.getLine()
+		line := f.falcoGateway.getLine()
 
 		if strings.Contains(line, "TRACER INFO - START RULES NAMES") {
 			continue
@@ -58,17 +58,17 @@ func (f *FalcoTracer) loadRulesFromFalco() {
 }
 
 func (f *FalcoTracer) flushFalcoData() {
-	f.falcoInterface.sendSigFlushData()
+	f.falcoGateway.sendSigFlushData()
 }
 
 func (f *FalcoTracer) loadStatsFromFalco(t time.Duration, ch chan (StatsAggregator)) {
 	for {
 		time.Sleep(t * time.Second)
 
-		f.falcoInterface.sendSigRcvSummary()
+		f.falcoGateway.sendSigRcvSummary()
 
 		for {
-			line := f.falcoInterface.getLine()
+			line := f.falcoGateway.getLine()
 
 			if strings.Contains(string(line), "START SUMMARY") {
 				start, end := getTimesFromMessage(line)
@@ -97,7 +97,7 @@ func (f *FalcoTracer) loadStatsFromFalco(t time.Duration, ch chan (StatsAggregat
 			}
 
 			if strings.Contains(string(line), "END SUMMARY") {
-				f.falcoInterface.sendSigFlushData()
+				f.falcoGateway.sendSigFlushData()
 				break
 			}
 		}
@@ -108,7 +108,7 @@ func (f *FalcoTracer) loadStatsFromFalco(t time.Duration, ch chan (StatsAggregat
 
 func (f *FalcoTracer) getFunctionLatencies() {
 	for {
-		line := f.falcoInterface.getLine()
+		line := f.falcoGateway.getLine()
 
 		if strings.Contains(string(line), "END FUNCTIONS LATENCIES") {
 			break
@@ -122,7 +122,7 @@ func (f *FalcoTracer) getFunctionLatencies() {
 
 func (f *FalcoTracer) getCounters() {
 	for {
-		line := f.falcoInterface.getLine()
+		line := f.falcoGateway.getLine()
 
 		if strings.Contains(string(line), "END COUNTERS") {
 			break
@@ -137,7 +137,7 @@ func (f *FalcoTracer) getCounters() {
 func (f *FalcoTracer) getUnbrokenRules() {
 
 	for {
-		line := f.falcoInterface.getLine()
+		line := f.falcoGateway.getLine()
 
 		if strings.Contains(string(line), "END UNBROKEN RULES") {
 			break
@@ -151,7 +151,7 @@ func (f *FalcoTracer) getUnbrokenRules() {
 func (f *FalcoTracer) getBrokenRules() {
 
 	for {
-		line := f.falcoInterface.getLine()
+		line := f.falcoGateway.getLine()
 
 		if strings.Contains(string(line), "END BROKEN RULES") {
 			break

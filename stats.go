@@ -10,13 +10,20 @@ type Falcostats struct {
 	EndTime       uint64                 `json:"end time"`
 	UnbrokenRules map[string]RuleStat    `json:"unbroken rules"`
 	BrokenRules   map[string]RuleStat    `json:"broken rules"`
-	FuncStats     map[string]FuncStat    `json:"function statistics"`
+	Stacktraces   map[string]Stacktrace  `json:"stacktraces"`
 	CounterStats  map[string]CounterStat `json:"counter statistics"`
 }
 
+type Stacktrace struct {
+	Counter   uint64     `json:"counter"`
+	Functions []FuncStat `json:"functions"`
+}
+
 type FuncStat struct {
+	Name    string `json:"function"`
 	Counter uint64 `json:"counter"`
 	Latency uint64 `json:"latency"`
+	Level   int    `json:"level"`
 }
 
 type CounterStat struct {
@@ -35,13 +42,30 @@ func NewFalcoStats() *Falcostats {
 
 	f.UnbrokenRules = make(map[string]RuleStat)
 	f.BrokenRules = make(map[string]RuleStat)
-	f.FuncStats = make(map[string]FuncStat)
+	f.Stacktraces = make(map[string]Stacktrace)
 	f.CounterStats = make(map[string]CounterStat)
 
 	return f
 }
 
-func NewFuncStat(line string) (string, *FuncStat) {
+func NewStackTrace(line string) (string, *Stacktrace) {
+	s := new(Stacktrace)
+
+	line = strings.Replace(line, "\n", "", 1)
+
+	tracerLine := strings.Split(line, "-")
+
+	name := tracerLine[2]
+	counter, _ := strconv.ParseUint(tracerLine[3], 10, 64)
+
+	s.Counter = counter
+
+	s.Functions = make([]FuncStat, 0)
+
+	return name, s
+}
+
+func NewFuncStat(line string) *FuncStat {
 	f := new(FuncStat)
 
 	line = strings.Replace(line, "\n", "", 1)
@@ -51,11 +75,14 @@ func NewFuncStat(line string) (string, *FuncStat) {
 	name := tracerLine[1]
 	counter, _ := strconv.ParseUint(tracerLine[2], 10, 64)
 	latency, _ := strconv.ParseUint(tracerLine[3], 10, 64)
+	level, _ := strconv.Atoi(tracerLine[4])
 
+	f.Name = name
 	f.Counter = counter
 	f.Latency = latency
+	f.Level = level
 
-	return name, f
+	return f
 }
 
 func NewCounterStat(line string) (string, *CounterStat) {
@@ -103,8 +130,16 @@ func (f *Falcostats) addBrokenRule(key string, value RuleStat) {
 	f.BrokenRules[key] = value
 }
 
+func (f *Falcostats) addStackTrace(key string, value Stacktrace) {
+	f.Stacktraces[key] = value
+}
+
 func (f *Falcostats) addFuncStat(key string, value FuncStat) {
-	f.FuncStats[key] = value
+
+	s := f.Stacktraces[key]
+	s.Functions = append(f.Stacktraces[key].Functions, value)
+
+	f.Stacktraces[key] = s
 }
 
 func (f *Falcostats) addCounterStat(key string, value CounterStat) {

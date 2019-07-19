@@ -15,10 +15,16 @@ func (s *StatsAggregator) addFalcoStats(start uint64, end uint64) {
 	s.Fs = append(s.Fs, f)
 }
 
-func (s *StatsAggregator) addFuncStat(n string, f FuncStat) {
+func (s *StatsAggregator) addStackTrace(n string, st Stacktrace) {
 	fs := s.Fs[len(s.Fs)-1]
 
-	fs.addFuncStat(n, f)
+	fs.addStackTrace(n, st)
+}
+
+func (s *StatsAggregator) addFuncStat(key string, f FuncStat) {
+	fs := s.Fs[len(s.Fs)-1]
+
+	fs.addFuncStat(key, f)
 }
 
 func (s *StatsAggregator) addCounterStat(n string, cs CounterStat) {

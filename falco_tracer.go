@@ -43,11 +43,11 @@ func (f *FalcoTracer) loadRulesFromFalco() {
 	for {
 		line := f.falcoGateway.getLine()
 
-		if strings.Contains(line, "TRACER INFO - START RULES NAMES") {
+		if strings.Contains(line, "START RULES NAMES") {
 			continue
 		}
 
-		if strings.Contains(line, "TRACER INFO - END RULES NAMES") {
+		if strings.Contains(line, "END RULES NAMES") {
 			break
 		}
 
@@ -81,8 +81,8 @@ func (f *FalcoTracer) loadStatsFromFalco(t time.Duration, wg *sync.WaitGroup) {
 				continue
 			}
 
-			if strings.Contains(string(line), "START FUNCTIONS LATENCIES") {
-				f.getFunctionLatencies()
+			if strings.Contains(string(line), "START STACKTRACES") {
+				f.getStacktraces()
 				continue
 			}
 
@@ -102,7 +102,7 @@ func (f *FalcoTracer) loadStatsFromFalco(t time.Duration, wg *sync.WaitGroup) {
 			}
 
 			if strings.Contains(string(line), "END SUMMARY") {
-				f.falcoGateway.sendSigFlushData()
+				f.flushFalcoData()
 				break
 			}
 		}
@@ -113,17 +113,32 @@ func (f *FalcoTracer) loadStatsFromFalco(t time.Duration, wg *sync.WaitGroup) {
 	wg.Done()
 }
 
-func (f *FalcoTracer) getFunctionLatencies() {
+func (f *FalcoTracer) getStacktraces() {
 	for {
 		line := f.falcoGateway.getLine()
 
-		if strings.Contains(string(line), "END FUNCTIONS LATENCIES") {
+		if strings.Contains(string(line), "END STACKTRACES") {
 			break
 		}
 
-		name, fs := NewFuncStat(line)
+		var name string
+		var s *Stacktrace
 
-		f.statsAggregator.addFuncStat(name, *fs)
+		for {
+			if strings.Contains(string(line), "END STACKTRACE") {
+				break
+			}
+
+			if strings.Contains(string(line), "START STACKTRACE") {
+				name, s = NewStackTrace(line)
+				f.statsAggregator.addStackTrace(name, *s)
+			} else {
+				fs := NewFuncStat(line)
+				f.statsAggregator.addFuncStat(name, *fs)
+			}
+
+			line = f.falcoGateway.getLine()
+		}
 	}
 }
 

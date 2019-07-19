@@ -21,10 +21,10 @@ func (s *StatsAggregator) addStackTrace(n string, st Stacktrace) {
 	fs.addStackTrace(n, st)
 }
 
-func (s *StatsAggregator) addFuncStat(key string, f FuncStat) {
+func (s *StatsAggregator) addFuncStat(key string, nameFunc string, f FuncStat) {
 	fs := s.Fs[len(s.Fs)-1]
 
-	fs.addFuncStat(key, f)
+	fs.addFuncStat(key, nameFunc, f)
 }
 
 func (s *StatsAggregator) addCounterStat(n string, cs CounterStat) {

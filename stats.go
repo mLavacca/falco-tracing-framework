@@ -15,15 +15,14 @@ type Falcostats struct {
 }
 
 type Stacktrace struct {
-	Counter   uint64     `json:"counter"`
-	Functions []FuncStat `json:"functions"`
+	Counter   uint64              `json:"counter"`
+	Functions map[string]FuncStat `json:"functions"`
 }
 
 type FuncStat struct {
-	Name    string `json:"function"`
 	Counter uint64 `json:"counter"`
 	Latency uint64 `json:"latency"`
-	Level   int    `json:"level"`
+	Caller  string `json:"caller"`
 }
 
 type CounterStat struct {
@@ -60,12 +59,12 @@ func NewStackTrace(line string) (string, *Stacktrace) {
 
 	s.Counter = counter
 
-	s.Functions = make([]FuncStat, 0)
+	s.Functions = make(map[string]FuncStat)
 
 	return name, s
 }
 
-func NewFuncStat(line string) *FuncStat {
+func NewFuncStat(line string) (string, *FuncStat) {
 	f := new(FuncStat)
 
 	line = strings.Replace(line, "\n", "", 1)
@@ -75,14 +74,13 @@ func NewFuncStat(line string) *FuncStat {
 	name := tracerLine[1]
 	counter, _ := strconv.ParseUint(tracerLine[2], 10, 64)
 	latency, _ := strconv.ParseUint(tracerLine[3], 10, 64)
-	level, _ := strconv.Atoi(tracerLine[4])
+	caller := tracerLine[4]
 
-	f.Name = name
 	f.Counter = counter
 	f.Latency = latency
-	f.Level = level
+	f.Caller = caller
 
-	return f
+	return name, f
 }
 
 func NewCounterStat(line string) (string, *CounterStat) {
@@ -134,12 +132,8 @@ func (f *Falcostats) addStackTrace(key string, value Stacktrace) {
 	f.Stacktraces[key] = value
 }
 
-func (f *Falcostats) addFuncStat(key string, value FuncStat) {
-
-	s := f.Stacktraces[key]
-	s.Functions = append(f.Stacktraces[key].Functions, value)
-
-	f.Stacktraces[key] = s
+func (f *Falcostats) addFuncStat(key string, funcName string, value FuncStat) {
+	f.Stacktraces[key].Functions[funcName] = value
 }
 
 func (f *Falcostats) addCounterStat(key string, value CounterStat) {

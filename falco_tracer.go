@@ -133,8 +133,8 @@ func (f *FalcoTracer) getStacktraces() {
 				name, s = NewStackTrace(line)
 				f.statsAggregator.addStackTrace(name, *s)
 			} else {
-				fs := NewFuncStat(line)
-				f.statsAggregator.addFuncStat(name, *fs)
+				nameFunc, fs := NewFuncStat(line)
+				f.statsAggregator.addFuncStat(name, nameFunc, *fs)
 			}
 
 			line = f.falcoGateway.getLine()

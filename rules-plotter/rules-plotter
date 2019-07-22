@@ -1,0 +1,110 @@
+#!/usr/bin/python3.7
+
+import json
+import plotly.graph_objects as go
+from plotly.subplots import make_subplots
+import numpy as np
+import sys
+from os.path import expanduser
+
+
+desktop_dir = expanduser("~") + "/Desktop/"
+
+
+def draw_plot(b):
+    with open(desktop_dir + "tracer_data.json") as json_file:
+        data = json.load(json_file)
+
+    rules = []
+    for k, v in data['rules']['falco rules'].items():
+        rules.append(v['Name'])
+
+    times = []
+    for i in range(0, len(data['statistics']['falco statistics'])):
+        times.append(i)
+
+    z1 = np.zeros((len(rules), len(times)), dtype=np.int)
+
+    for i in range(0, len(times)):
+        for j in range(0, len(rules)):
+            try:
+                z1[j][i] = data['statistics']['falco statistics'][i][b][rules[j]]['counter']
+            except KeyError:
+                pass
+
+    fig = make_subplots(rows=2, cols=1, subplot_titles=("Rules counters", "Rules latencies"))
+
+    fig.add_trace(
+        go.Heatmap(
+            z=z1,
+            x=times,
+            y=rules,
+            colorscale=[
+                [0.0, "rgb(165,0,38)"],
+                [0.1111111111111111, "rgb(215,48,39)"],
+                [0.2222222222222222, "rgb(244,109,67)"],
+                [0.3333333333333333, "rgb(253,174,97)"],
+                [0.4444444444444444, "rgb(254,224,144)"],
+                [0.5555555555555556, "rgb(224,243,248)"],
+                [0.6666666666666666, "rgb(171,217,233)"],
+                [0.7777777777777778, "rgb(116,173,209)"],
+                [0.8888888888888888, "rgb(69,117,180)"],
+                [1.0, "rgb(49,54,149)"]
+            ]
+        ), row=1, col=1
+    )
+
+    z2 = np.zeros((len(rules), len(times)), dtype=np.float)
+
+    for i in range(0, len(times)):
+        for j in range(0, len(rules)):
+            try:
+                z2[j][i] = data['statistics']['falco statistics'][i][b][rules[j]]['latency']
+            except KeyError:
+                pass
+
+    fig.add_trace(go.Heatmap(
+        z=z2,
+        x=times,
+        y=rules,
+        colorscale=[
+            [0.0, "rgb(165,0,38)"],
+            [0.1111111111111111, "rgb(215,48,39)"],
+            [0.2222222222222222, "rgb(244,109,67)"],
+            [0.3333333333333333, "rgb(253,174,97)"],
+            [0.4444444444444444, "rgb(254,224,144)"],
+            [0.5555555555555556, "rgb(224,243,248)"],
+            [0.6666666666666666, "rgb(171,217,233)"],
+            [0.7777777777777778, "rgb(116,173,209)"],
+            [0.8888888888888888, "rgb(69,117,180)"],
+            [1.0, "rgb(49,54,149)"]
+        ]
+    ), row=2, col=1
+    )
+
+    fig.update_layout(
+        title='Falco rules statistics')
+    fig.show()
+
+    json_file.close()
+
+
+def main():
+    if len(sys.argv) != 2:
+        print("Arguments error")
+        exit()
+
+    broken = sys.argv[1]
+    if broken == "b":
+        broken = "broken rules"
+    elif broken == "u":
+        broken = "unbroken rules"
+    else:
+        print("invalid argument")
+        exit()
+
+    draw_plot(broken)
+
+
+if __name__ == "__main__":
+    main()

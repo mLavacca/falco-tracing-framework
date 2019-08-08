@@ -36,6 +36,7 @@ func main() {
 		}
 		recorder = NewRecorder(*tracerConf)
 		recorder.startRecord()
+		recorder.rollback()
 	case "report":
 		if *outputFile == "" {
 			*outputFile = "./stats.json"
@@ -45,7 +46,7 @@ func main() {
 	}
 }
 
-func tmpThrash() {
+func tmpTrash() {
 
 	var wg sync.WaitGroup
 

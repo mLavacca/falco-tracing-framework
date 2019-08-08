@@ -35,10 +35,11 @@ type RulesBreakersConfiguration struct {
 }
 
 type BreakingProfileConfiguration struct {
-	Name     string  `yaml:"name,omitempty"`
-	Sequence [][]int `yaml:"sequence,omitempty"`
-	Ratio    int     `yaml:"ratio,omitempty"`
-	Limit    int     `yaml:"limit,omitempty"`
+	Name             string  `yaml:"name,omitempty"`
+	Sequence         [][]int `yaml:"sequence,omitempty"`
+	RollbackSequence []int   `yaml:"rollback_sequence,omitempty"`
+	Ratio            int     `yaml:"ratio,omitempty"`
+	Limit            int     `yaml:"limit,omitempty"`
 }
 
 func (tc *TracerConfigurations) UnmarshalYAML(configFile string) error {

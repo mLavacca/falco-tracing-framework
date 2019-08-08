@@ -12,6 +12,7 @@ type TesterFunction struct {
 
 type Tester struct {
 	functionList [][]TesterFunction
+	rollbackList []int
 	ratio        int
 	limit        int
 }
@@ -38,6 +39,10 @@ func NewTester(conf TracerConfigurations) *Tester {
 				}
 				i++
 			}
+
+			for _, r := range p.RollbackSequence {
+				t.rollbackList = append(t.rollbackList, r)
+			}
 			break
 		}
 	}
@@ -48,6 +53,12 @@ func NewTester(conf TracerConfigurations) *Tester {
 func (t *Tester) runAllTests() {
 	for _, ts := range t.functionList {
 		t.runTestSequence(ts)
+	}
+}
+
+func (t *Tester) runAllRollbacks() {
+	for _, r := range t.rollbackList {
+		rollbacksSlice[r].(func())()
 	}
 }
 
@@ -62,12 +73,13 @@ func (t *Tester) runTestSequence(testSequence []TesterFunction) {
 			for j := 0; j < n; j++ {
 			}
 
-			index := i % len(testSequence)
-			testSequence[index].function.(func())()
-			testSequence[index].counter++
+			for p := 0; p < len(testSequence); p++ {
+				testSequence[p].function.(func())()
+				testSequence[p].counter++
 
-			if testSequence[index].counter >= t.limit {
-				return
+				if testSequence[p].counter >= t.limit && p == len(testSequence)-1 {
+					return
+				}
 			}
 		}
 

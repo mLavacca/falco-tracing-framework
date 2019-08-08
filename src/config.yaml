@@ -1,0 +1,33 @@
+record:
+  prog_config: 
+    prog_bin: /home/mattia/Desktop/sysdig/build/userspace/sysdig/sysdig
+    prog_args:
+      - "-w"
+      - "/home/mattia/Desktop/trace.scap"
+  breaking_profile: flat
+    
+report:
+  prog_config: 
+    prog_bin: /home/mattia/Desktop/falco/build/userspace/falco
+    prog_args:
+      - "-c falco.yaml"
+      - "-o json_output=True"
+      - "-o json_include_output_property=True"
+      - "-o priority=debug"
+      - "-v"
+
+rules_breakers:
+  - rule: Error File below / or /root opened for writing
+    rule_id: 0
+    trigger: writeBelowRoot
+
+  - rule: Write below etc
+    rule_id: 1
+    trigger: writeBelowEtc
+    rollback: writeBelowEtcRollback
+
+breaking_profiles:
+  - name: interleaved1
+    sequence: [0, 1]
+    ratio: 5
+    limit: 1000

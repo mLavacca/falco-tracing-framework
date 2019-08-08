@@ -5,14 +5,14 @@ import plotly.graph_objects as go
 from plotly.subplots import make_subplots
 import numpy as np
 import sys
-from os.path import expanduser
+import plotly.express as px
+import pandas as pd
 
-
-desktop_dir = expanduser("~") + "/Desktop/"
+save_dir = "/tmp/"
 
 
 def draw_plot(b):
-    with open(desktop_dir + "tracer_data.json") as json_file:
+    with open(save_dir + "tracer_data.json") as json_file:
         data = json.load(json_file)
 
     rules = []
@@ -89,12 +89,68 @@ def draw_plot(b):
     json_file.close()
 
 
+def draw_avg_hist():
+    with open(save_dir + "tracer_data.json") as json_file:
+        data = json.load(json_file)
+    
+    data_array = data['statistics']['avg unbroken rules stats']
+    data_to_show = []
+
+    for el in data_array:
+        data_to_show.append({'name': el['name'], 'id': el['values']['tag id'], 'counter': el['values']['counter'],
+                             'latency': el['values']['latency'],
+                             'overhead': el['values']['counter']*el['values']['latency']})
+
+    data_to_show_frame = pd.DataFrame(data_to_show)
+
+    fig = px.bar(data_to_show_frame, x='name', y='counter')
+    fig.update_layout(
+        autosize=False,
+        height=800,
+        width=1800,
+        xaxis=go.layout.XAxis(
+            title_text="",
+        ))
+    fig.update_xaxes(automargin=True)
+
+    fig2 = px.bar(data_to_show_frame, x='name', y='latency')
+    fig2.update_layout(
+        autosize=False,
+        height=800,
+        width=1800,
+        xaxis=go.layout.XAxis(
+            title_text="",
+        ))
+    fig2.update_xaxes(automargin=True)
+
+    fig3 = px.bar(data_to_show_frame, x='name', y='overhead')
+    fig3.update_layout(
+        autosize=False,
+        height=800,
+        width=1800,
+        xaxis=go.layout.XAxis(
+            title_text="",
+        ))
+    fig3.update_xaxes(automargin=True)
+
+    fig.show()
+    fig2.show()
+    fig3.show()
+
+    json_file.close()
+
+
 def main():
     if len(sys.argv) != 2:
         print("Arguments error")
         exit()
 
     broken = sys.argv[1]
+
+    if broken == "a":
+        draw_avg_hist()
+        return
+
     if broken == "b":
         broken = "broken rules"
     elif broken == "u":

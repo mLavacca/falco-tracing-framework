@@ -57,6 +57,9 @@ func (f *FalcoTracer) loadRulesFromFalco() {
 		}
 
 		f.rulesAggregator.addRule(*r)
+
+		rs := NewruleStatavg(r.Name, r.Id)
+		f.statsAggregator.AvgUnbrokenRulesStats = append(f.statsAggregator.AvgUnbrokenRulesStats, *rs)
 	}
 
 	f.rulesAggregator.setNRules()
@@ -167,6 +170,8 @@ func (f *FalcoTracer) getUnbrokenRules() {
 
 		name, ur := NewRuleStat(line, f.rulesAggregator)
 		f.statsAggregator.addUnbrokenRuleStat(name, *ur)
+
+		f.statsAggregator.sumValuesToAverageUnbroken(ur.Id, ur.Counter, ur.Latency)
 	}
 }
 
@@ -181,6 +186,8 @@ func (f *FalcoTracer) getBrokenRules() {
 
 		name, br := NewRuleStat(line, f.rulesAggregator)
 		f.statsAggregator.addBrokenRuleStat(name, *br)
+
+		f.statsAggregator.sumValuesToAverageBroken(br.Id, br.Counter, br.Latency)
 	}
 }
 

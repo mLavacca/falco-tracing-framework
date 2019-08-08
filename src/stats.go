@@ -36,6 +36,11 @@ type RuleStat struct {
 	Latency uint64 `json:"latency"`
 }
 
+type RuleStatAvg struct {
+	Rule RuleStat `json:"values"`
+	Name string   `json:"name"`
+}
+
 func NewFalcoStats() *Falcostats {
 	f := new(Falcostats)
 
@@ -118,6 +123,17 @@ func NewRuleStat(line string, ra *RulesAggregator) (string, *RuleStat) {
 	r.Latency = latency
 
 	return rule.Name, r
+}
+
+func NewruleStatavg(name string, id int) *RuleStatAvg {
+	rs := new(RuleStatAvg)
+	r := new(RuleStat)
+
+	rs.Rule = *r
+	rs.Name = name
+	rs.Rule.Id = id
+
+	return rs
 }
 
 func (f *Falcostats) addUnbrokenRule(key string, value RuleStat) {

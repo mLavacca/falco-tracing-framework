@@ -1,11 +1,11 @@
 package main
 
 import (
+	"flag"
 	"fmt"
 	"log"
 	"os"
 	"os/signal"
-	"os/user"
 	"strconv"
 	"sync"
 	"syscall"
@@ -14,14 +14,42 @@ import (
 
 func main() {
 
-	var wg sync.WaitGroup
+	var recorder *Recorder
+	var reporter *Reporter
 
-	user, err := user.Current()
+	var configFile = flag.String("c", "config.yaml", "configuration yaml file")
+	var mode = flag.String("m", "record", "working mode")
+	var outputFile = flag.String("o", "", "output file")
+
+	flag.Parse()
+
+	tracerConf := new(TracerConfigurations)
+	err := tracerConf.UnmarshalYAML(*configFile)
 	if err != nil {
-		panic(err)
+		log.Fatalln("unable to load Falco configuration", err)
 	}
 
-	DesktopDir := user.HomeDir + "/Desktop/"
+	switch *mode {
+	case "record":
+		if *outputFile == "" {
+			*outputFile = "./trace.scap"
+		}
+		recorder = NewRecorder(tracerConf.Record)
+		recorder.startRecord()
+	case "report":
+		if *outputFile == "" {
+			*outputFile = "./stats.json"
+		}
+		reporter = NewReporter(tracerConf.Report)
+		reporter.startReport()
+	}
+}
+
+func tmpThrash() {
+
+	var wg sync.WaitGroup
+
+	outDir := "/tmp/"
 
 	t, err := strconv.Atoi(os.Args[2])
 	if err != nil {
@@ -53,7 +81,13 @@ func main() {
 		log.Fatal("error in object marshaling")
 	}
 
-	f, err := os.Create(DesktopDir + "tracer_data.json")
+	falcoTracer.statsAggregator.sortAvgSlices()
+
+	dumpJSONOnFile(jsonStats, outDir)
+}
+
+func dumpJSONOnFile(jsonStats []byte, outDir string) {
+	f, err := os.Create(outDir + "tracer_data.json")
 	if err != nil {
 		fmt.Println(err)
 		return

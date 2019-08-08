@@ -34,7 +34,7 @@ func main() {
 		if *outputFile == "" {
 			*outputFile = "./trace.scap"
 		}
-		recorder = NewRecorder(tracerConf.Record)
+		recorder = NewRecorder(*tracerConf)
 		recorder.startRecord()
 	case "report":
 		if *outputFile == "" {

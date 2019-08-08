@@ -4,7 +4,7 @@ record:
     prog_args:
       - "-w"
       - "/home/mattia/Desktop/trace.scap"
-  breaking_profile: flat
+  breaking_profile: interleaved1
     
 report:
   prog_config: 
@@ -27,7 +27,12 @@ rules_breakers:
     rollback: writeBelowEtcRollback
 
 breaking_profiles:
+  - name: flat
+    sequence: [[0], [1]]
+    ratio: 5
+    limit: 1000
+
   - name: interleaved1
-    sequence: [0, 1]
+    sequence: [[0, 1]]
     ratio: 5
     limit: 1000

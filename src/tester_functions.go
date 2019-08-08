@@ -5,11 +5,18 @@ import (
 	"os"
 )
 
-const functionsSlice []interface{}{
-	writeBelowRoot
-	writeBelowEtc
+var functionsSlice = map[int]interface{}{
+	0: writeBelowRoot,
+	1: writeBelowEtc,
 }
 
+var rollbacksSlice = map[int]interface{}{
+	1: writeBelowEtcRollback,
+}
+
+/*
+ * id = 0
+ */
 func writeBelowRoot() {
 	path := "/sbin/iptables"
 
@@ -22,6 +29,9 @@ func writeBelowRoot() {
 	}
 }
 
+/*
+ * id = 1
+ */
 func writeBelowEtc() {
 	path := "/etc/falco_tester_file"
 

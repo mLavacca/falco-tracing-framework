@@ -1,6 +1,8 @@
-package main
+package commands
 
 import (
+	"configuration"
+	"falco_test"
 	"log"
 	"os/exec"
 	"syscall"
@@ -11,20 +13,20 @@ type Recorder struct {
 	sysdigBin  string
 	sysdigArgs []string
 
-	tester *Tester
+	tester *falco_test.Tester
 }
 
-func NewRecorder(conf TracerConfigurations) *Recorder {
+func NewRecorder(conf configuration.TracerConfigurations) *Recorder {
 	r := new(Recorder)
 
 	r.sysdigBin = conf.Record.ProgConfig.ProgBin
 	r.sysdigArgs = conf.Record.ProgConfig.ProgArgs
-	r.tester = NewTester(conf)
+	r.tester = falco_test.NewTester(conf)
 
 	return r
 }
 
-func (r *Recorder) startRecord() {
+func (r *Recorder) StartRecord() {
 
 	cmd := exec.Command(r.sysdigBin, r.sysdigArgs...)
 
@@ -35,7 +37,7 @@ func (r *Recorder) startRecord() {
 
 	time.Sleep(3 * time.Second)
 
-	r.tester.runAllTests()
+	r.tester.RunAllTests()
 
 	time.Sleep(3 * time.Second)
 
@@ -44,6 +46,6 @@ func (r *Recorder) startRecord() {
 	}
 }
 
-func (r *Recorder) rollback() {
-	r.tester.runAllRollbacks()
+func (r *Recorder) Rollback() {
+	r.tester.RunAllRollbacks()
 }

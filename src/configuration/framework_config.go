@@ -1,4 +1,4 @@
-package main
+package configuration
 
 import (
 	"io/ioutil"
@@ -20,6 +20,7 @@ type RecordConfiguration struct {
 
 type ReportConfiguration struct {
 	ProgConfig ProgConfiguration `yaml:"prog_config,omitempty"`
+	Iterations int               `yaml:"iterations,omitempty"`
 }
 
 type ProgConfiguration struct {
@@ -28,10 +29,8 @@ type ProgConfiguration struct {
 }
 
 type RulesBreakersConfiguration struct {
-	Rule     string `yaml:"rule,omitempty"`
-	RuleId   int    `yaml:"rule_id,omitempty"`
-	Trigger  string `yaml:"trigger,omitempty"`
-	Rollback string `yaml:"rollback,omitempty"`
+	Rule   string `yaml:"rule,omitempty"`
+	RuleId int    `yaml:"rule_id,omitempty"`
 }
 
 type BreakingProfileConfiguration struct {

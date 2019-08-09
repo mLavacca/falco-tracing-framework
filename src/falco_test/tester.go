@@ -1,4 +1,6 @@
-package main
+package falco_test
+
+import "configuration"
 
 const (
 	N = 10000000
@@ -17,7 +19,7 @@ type Tester struct {
 	limit        int
 }
 
-func NewTester(conf TracerConfigurations) *Tester {
+func NewTester(conf configuration.TracerConfigurations) *Tester {
 	t := new(Tester)
 
 	profile := conf.Record.BreakingProfile
@@ -34,7 +36,7 @@ func NewTester(conf TracerConfigurations) *Tester {
 
 				for _, v := range s {
 					t.functionList[i] = append(t.functionList[i], TesterFunction{
-						function: functionsSlice[v],
+						function: testFunctions[v],
 					})
 				}
 				i++
@@ -50,15 +52,15 @@ func NewTester(conf TracerConfigurations) *Tester {
 	return t
 }
 
-func (t *Tester) runAllTests() {
+func (t *Tester) RunAllTests() {
 	for _, ts := range t.functionList {
 		t.runTestSequence(ts)
 	}
 }
 
-func (t *Tester) runAllRollbacks() {
+func (t *Tester) RunAllRollbacks() {
 	for _, r := range t.rollbackList {
-		rollbacksSlice[r].(func())()
+		testRollbacks[r].(func())()
 	}
 }
 

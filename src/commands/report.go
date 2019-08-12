@@ -7,7 +7,6 @@ import (
 	"os"
 	"os/exec"
 	"stats_getter"
-	"time"
 )
 
 type Reporter struct {
@@ -17,7 +16,7 @@ type Reporter struct {
 	mode       string
 	iterations int
 
-	falcoTracer *stats_getter.falcoTracer
+	falcoTracer *stats_getter.FalcoTracer
 }
 
 func NewReporter(conf configuration.TracerConfigurations) *Reporter {
@@ -27,7 +26,8 @@ func NewReporter(conf configuration.TracerConfigurations) *Reporter {
 	r.falcoargs = conf.Report.ProgConfig.ProgArgs
 	r.mode = conf.Report.Mode
 	r.iterations = conf.Report.Iterations
-	r.falcoTracer = stats_getter.NewFalcoTracer()
+
+	//r.falcoTracer = stats_getter.NewFalcoTracer(r.mode)
 
 	return r
 }
@@ -43,46 +43,70 @@ func (r *Reporter) StartReport() {
 	}
 }
 
-func (r *reporter) offlineReport() {
+func (r *Reporter) offlineReport() {
 	cmd := exec.Command(r.falcoBin, r.falcoargs...)
 
-	for i := 0; i < r.iterations; i++ {
-		err := cmd.Run()
-		if err != nil {
-			log.Fatalln("cmd.Start() failed with ", err)
-		}
+	/*
+		for i := 0; i < r.iterations; i++ {
+			err := cmd.Run()
+			if err != nil {
+				log.Fatalln("cmd.Start() failed with ", err)
+			}
 
-		getOfflineStats()
+			getOfflineStats()
+		}
+	*/
+
+	err := cmd.Start()
+	if err != nil {
+		log.Fatalln("cmd.Start() failed with ", err)
 	}
+
+	r.falcoTracer = stats_getter.NewFalcoTracer(r.mode)
+	r.getOfflineStats()
 }
 
-func (r *reporter) onlineReport() {
-	falcoTracer.setupConnection()
+func (r *Reporter) onlineReport() {
+	/*
+		var wg sync.WaitGroup
+		sigs := make(chan os.Signal)
 
-	falcoTracer.loadRulesFromFalco()
+		r.falcoTracer.LoadRulesFromFalco()
 
-	falcoTracer.flushFalcoData()
+		r.falcoTracer.FlushFalcoData()
 
-	wg.Add(1)
-	go falcoTracer.loadStatsFromFalco(time.Duration(t), &wg)
+		wg.Add(1)
+		go r.falcoTracer.LoadStatsFromFalco(time.Duration(1), &wg)
 
-	<-sigs
+		<-sigs
 
-	falcoTracer.exitFlag = true
+		r.falcoTracer.ExitFlag = true
 
-	wg.Wait()
+		wg.Wait()
 
-	jsonStats, err := falcoTracer.MarshalJSON()
+		jsonStats, err := r.falcoTracer.MarshalJSON()
+		if err != nil {
+			log.Fatal("error in object marshaling")
+		}
+
+		r.falcoTracer.StatsAggregator.SortAvgSlices()
+
+		writeJSONOnFile(jsonStats, "/tmp/")
+	*/
+}
+
+func (r *Reporter) getOfflineStats() {
+	//r.falcoTracer.LoadRulesFromFalco()
+	r.falcoTracer.LoadStatsFromFalco()
+
+	jsonStats, err := r.falcoTracer.MarshalJSON()
 	if err != nil {
 		log.Fatal("error in object marshaling")
 	}
 
-	falcoTracer.statsAggregator.sortAvgSlices()
+	r.falcoTracer.StatsAggregator.SortAvgSlices()
 
-	writeJSONOnFile(jsonStats, outDir)
-}
-
-func getOfflineStats() {
+	writeJSONOnFile(jsonStats, "/tmp/")
 
 }
 

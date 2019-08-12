@@ -2,43 +2,31 @@ package stats_getter
 
 import (
 	"encoding/json"
-	"log"
-	"metrics"
-	"os"
 	"strconv"
 	"strings"
-	"sync"
-	"time"
+
+	m "metrics"
 )
 
 type FalcoTracer struct {
-	exitFlag        bool
+	ExitFlag        bool
 	falcoGateway    *FalcoGateway
-	statsAggregator *metrics.StatsAggregator
-	rulesAggregator *metrics.RulesAggregator
+	StatsAggregator *m.StatsAggregator
+	rulesAggregator *m.RulesAggregator
 }
 
-func NewFalcoTracer() *FalcoTracer {
-
-	falcoPid, err := strconv.Atoi(os.Args[1])
-	if err != nil {
-		log.Fatal("Pid invalid")
-	}
+func NewFalcoTracer(mode string) *FalcoTracer {
 
 	f := new(FalcoTracer)
 
-	f.falcoGateway = NewFalcoGateway(falcoPid, "/tmp/tracer_pipe_"+os.Args[1])
-	f.statsAggregator = new(StatsAggregator)
-	f.rulesAggregator = NewRulesAggregator()
+	f.falcoGateway = NewFalcoGateway(mode)
+	f.StatsAggregator = new(m.StatsAggregator)
+	f.rulesAggregator = m.NewRulesAggregator()
 
 	return f
 }
 
-func (f *FalcoTracer) setupConnection() {
-	f.falcoGateway.OpenPipe()
-}
-
-func (f *FalcoTracer) loadRulesFromFalco() {
+func (f *FalcoTracer) LoadRulesFromFalco() {
 	f.falcoGateway.sendSigRcvRulesNames()
 
 	for {
@@ -52,36 +40,36 @@ func (f *FalcoTracer) loadRulesFromFalco() {
 			break
 		}
 
-		r := NewRule(line)
+		r := m.NewRule(line)
 		if r == nil {
 			continue
 		}
 
-		f.rulesAggregator.addRule(*r)
+		f.rulesAggregator.AddRule(*r)
 
-		rs := NewruleStatavg(r.Name, r.Id)
-		f.statsAggregator.AvgUnbrokenRulesStats = append(f.statsAggregator.AvgUnbrokenRulesStats, *rs)
+		rs := m.NewruleStatavg(r.Name, r.Id)
+		f.StatsAggregator.AvgUnbrokenRulesStats = append(f.StatsAggregator.AvgUnbrokenRulesStats, *rs)
 	}
 
-	f.rulesAggregator.setNRules()
+	f.rulesAggregator.SetNRules()
 }
 
-func (f *FalcoTracer) flushFalcoData() {
+func (f *FalcoTracer) FlushFalcoData() {
 	f.falcoGateway.sendSigFlushData()
 }
 
-func (f *FalcoTracer) loadStatsFromFalco(t time.Duration, wg *sync.WaitGroup) {
-	for f.exitFlag == false {
-		time.Sleep(t * time.Second)
+func (f *FalcoTracer) LoadStatsFromFalco( /*t time.Duration, wg *sync.WaitGroup*/ ) {
+	for f.ExitFlag == false {
+		//time.Sleep(t * time.Second)
 
-		f.falcoGateway.sendSigRcvSummary()
+		//f.falcoGateway.sendSigRcvSummary()
 
 		for {
 			line := f.falcoGateway.getLine()
 
 			if strings.Contains(string(line), "START SUMMARY") {
 				start, end := getTimesFromMessage(line)
-				f.statsAggregator.addFalcoStats(start, end)
+				f.StatsAggregator.AddFalcoStats(start, end)
 				continue
 			}
 
@@ -106,15 +94,18 @@ func (f *FalcoTracer) loadStatsFromFalco(t time.Duration, wg *sync.WaitGroup) {
 			}
 
 			if strings.Contains(string(line), "END SUMMARY") {
-				f.flushFalcoData()
+				//f.FlushFalcoData()
+				if f.falcoGateway.mode == "offline" {
+					return
+				}
 				break
 			}
 		}
 	}
 
-	f.statsAggregator.setTimes()
+	f.StatsAggregator.SetTimes()
 
-	wg.Done()
+	//wg.Done()
 }
 
 func (f *FalcoTracer) getStacktraces() {
@@ -126,7 +117,7 @@ func (f *FalcoTracer) getStacktraces() {
 		}
 
 		var name string
-		var s *Stacktrace
+		var s *m.Stacktrace
 
 		for {
 			if strings.Contains(string(line), "END STACKTRACE") {
@@ -134,11 +125,11 @@ func (f *FalcoTracer) getStacktraces() {
 			}
 
 			if strings.Contains(string(line), "START STACKTRACE") {
-				name, s = NewStackTrace(line)
-				f.statsAggregator.addStackTrace(name, *s)
+				name, s = m.NewStackTrace(line)
+				f.StatsAggregator.AddStackTrace(name, *s)
 			} else {
-				nameFunc, fs := NewFuncStat(line)
-				f.statsAggregator.addFuncStat(name, nameFunc, *fs)
+				nameFunc, fs := m.NewFuncStat(line)
+				f.StatsAggregator.AddFuncStat(name, nameFunc, *fs)
 			}
 
 			line = f.falcoGateway.getLine()
@@ -154,9 +145,9 @@ func (f *FalcoTracer) getCounters() {
 			break
 		}
 
-		name, cs := NewCounterStat(line)
+		name, cs := m.NewCounterStat(line)
 
-		f.statsAggregator.addCounterStat(name, *cs)
+		f.StatsAggregator.AddCounterStat(name, *cs)
 	}
 }
 
@@ -169,10 +160,10 @@ func (f *FalcoTracer) getUnbrokenRules() {
 			break
 		}
 
-		name, ur := NewRuleStat(line, f.rulesAggregator)
-		f.statsAggregator.addUnbrokenRuleStat(name, *ur)
+		name, ur := m.NewRuleStat(line, f.rulesAggregator)
+		f.StatsAggregator.AddUnbrokenRuleStat(name, *ur)
 
-		f.statsAggregator.sumValuesToAverageUnbroken(ur.Id, ur.Counter, ur.Latency)
+		f.StatsAggregator.SumValuesToAverageUnbroken(ur.Id, ur.Counter, ur.Latency)
 	}
 }
 
@@ -185,10 +176,10 @@ func (f *FalcoTracer) getBrokenRules() {
 			break
 		}
 
-		name, br := NewRuleStat(line, f.rulesAggregator)
-		f.statsAggregator.addBrokenRuleStat(name, *br)
+		name, br := m.NewRuleStat(line, f.rulesAggregator)
+		f.StatsAggregator.AddBrokenRuleStat(name, *br)
 
-		f.statsAggregator.sumValuesToAverageBroken(br.Id, br.Counter, br.Latency)
+		f.StatsAggregator.SumValuesToAverageBroken(br.Id, br.Counter, br.Latency)
 	}
 }
 
@@ -206,10 +197,10 @@ func getTimesFromMessage(line string) (uint64, uint64) {
 
 func (f *FalcoTracer) MarshalJSON() ([]byte, error) {
 	return json.Marshal(&struct {
-		Stats StatsAggregator `json:"statistics"`
-		Rules RulesAggregator `json:"rules"`
+		Stats m.StatsAggregator `json:"statistics"`
+		Rules m.RulesAggregator `json:"rules"`
 	}{
-		Stats: *f.statsAggregator,
+		Stats: *f.StatsAggregator,
 		Rules: *f.rulesAggregator,
 	})
 }

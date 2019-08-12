@@ -52,12 +52,17 @@ func NewFalcoStats() *Falcostats {
 	return f
 }
 
-func NewStackTrace(line string) (string, *Stacktrace) {
-	s := new(Stacktrace)
-
+func getTracerLine(line string) []string {
 	line = strings.Replace(line, "\n", "", 1)
 
 	tracerLine := strings.Split(line, "-")
+	return tracerLine
+}
+
+func NewStackTrace(line string) (string, *Stacktrace) {
+	s := new(Stacktrace)
+
+	tracerLine := getTracerLine(line)
 
 	name := tracerLine[2]
 	counter, _ := strconv.ParseUint(tracerLine[3], 10, 64)
@@ -72,9 +77,7 @@ func NewStackTrace(line string) (string, *Stacktrace) {
 func NewFuncStat(line string) (string, *FuncStat) {
 	f := new(FuncStat)
 
-	line = strings.Replace(line, "\n", "", 1)
-
-	tracerLine := strings.Split(line, "-")
+	tracerLine := getTracerLine(line)
 
 	name := tracerLine[1]
 	counter, _ := strconv.ParseUint(tracerLine[2], 10, 64)
@@ -91,9 +94,7 @@ func NewFuncStat(line string) (string, *FuncStat) {
 func NewCounterStat(line string) (string, *CounterStat) {
 	c := new(CounterStat)
 
-	line = strings.Replace(line, "\n", "", 1)
-
-	tracerLine := strings.Split(line, "-")
+	tracerLine := getTracerLine(line)
 
 	name := tracerLine[1]
 	counter, _ := strconv.ParseUint(tracerLine[2], 10, 64)
@@ -106,9 +107,7 @@ func NewCounterStat(line string) (string, *CounterStat) {
 func NewRuleStat(line string, ra *RulesAggregator) (string, *RuleStat) {
 	r := new(RuleStat)
 
-	line = strings.Replace(line, "\n", "", 1)
-
-	tracerLine := strings.Split(line, "-")
+	tracerLine := getTracerLine(line)
 
 	id, _ := strconv.Atoi(tracerLine[1])
 	tag, _ := strconv.Atoi(tracerLine[2])

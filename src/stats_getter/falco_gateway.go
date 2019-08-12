@@ -2,6 +2,7 @@ package stats_getter
 
 import (
 	"bufio"
+	"fmt"
 	"log"
 	"os"
 	"syscall"
@@ -12,9 +13,10 @@ const flushDataSignal = 35
 const rcvRulesNamesSignal = 36
 
 type FalcoGateway struct {
-	falcoPid int
-	pipeName string
-	pipeFile *os.File
+	mode          string
+	falcoPid      int
+	inputFileName string
+	pipeFile      *os.File
 
 	sigRcvSummary    syscall.Signal
 	sigRcvRulesNames syscall.Signal
@@ -23,23 +25,48 @@ type FalcoGateway struct {
 	pipeReader *bufio.Reader
 }
 
-func NewFalcoGateway(falcoPid int, pipeName string) *FalcoGateway {
-	f := new(FalcoGateway)
+func (f *FalcoGateway) configureSignals() {
 
-	f.falcoPid = falcoPid
-	f.pipeName = pipeName
+	f.falcoPid = 0
 
 	f.sigRcvSummary = syscall.Signal(rcvStatsSignal)
 	f.sigRcvRulesNames = syscall.Signal(rcvRulesNamesSignal)
 	f.sigFlushData = syscall.Signal(flushDataSignal)
-
-	return f
 }
 
-func (f *FalcoGateway) OpenPipe() {
+func NewFalcoGateway(mode string) *FalcoGateway {
+
+	fg := new(FalcoGateway)
+	fg.mode = mode
+
+	var inputPath string
+
+	if mode == "online" {
+		inputPath = "/tmp/TO_DO"
+		fg.configureSignals()
+	}
+
+	if mode == "offline" {
+		inputPath = "/tmp/falco_tracer_file"
+	}
+
+	fg.inputFileName = inputPath
+	fg.openPipe()
+
+	return fg
+}
+
+func (f *FalcoGateway) openPipe() {
 	var err error
 
-	f.pipeFile, err = os.OpenFile(f.pipeName, os.O_RDONLY, os.ModeNamedPipe)
+	if f.mode == "online" {
+		f.pipeFile, err = os.OpenFile(f.inputFileName, os.O_RDONLY, os.ModeNamedPipe)
+	}
+
+	if f.mode == "offline" {
+		f.pipeFile, err = os.Open(f.inputFileName)
+	}
+
 	if err != nil {
 		log.Fatal("Open named pipe file error")
 	}
@@ -56,6 +83,8 @@ func (f *FalcoGateway) getLine() string {
 	if err != nil {
 		log.Fatal("error, pipe file broken")
 	}
+
+	fmt.Println(string(line))
 
 	return string(line)
 }

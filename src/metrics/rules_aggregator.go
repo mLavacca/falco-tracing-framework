@@ -1,4 +1,4 @@
-package main
+package metrics
 
 type RulesAggregator struct {
 	NRules     int               `json:"# of rules"`
@@ -13,7 +13,7 @@ func NewRulesAggregator() *RulesAggregator {
 	return r
 }
 
-func (r *RulesAggregator) addRule(rule FalcoRule) {
+func (r *RulesAggregator) AddRule(rule FalcoRule) {
 	r.FalcoRules[rule.Id] = rule
 }
 
@@ -21,6 +21,6 @@ func (r *RulesAggregator) getRuleById(id int) FalcoRule {
 	return r.FalcoRules[id]
 }
 
-func (r *RulesAggregator) setNRules() {
+func (r *RulesAggregator) SetNRules() {
 	r.NRules = len(r.FalcoRules)
 }

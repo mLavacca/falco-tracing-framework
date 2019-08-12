@@ -1,4 +1,4 @@
-package main
+package metrics
 
 import (
 	"sort"
@@ -12,7 +12,7 @@ type StatsAggregator struct {
 	AvgBrokenRulesStats   []RuleStatAvg `json:"avg broken rules stats"`
 }
 
-func (s *StatsAggregator) addFalcoStats(start uint64, end uint64) {
+func (s *StatsAggregator) AddFalcoStats(start uint64, end uint64) {
 	f := NewFalcoStats()
 
 	f.StartTime = start
@@ -21,37 +21,37 @@ func (s *StatsAggregator) addFalcoStats(start uint64, end uint64) {
 	s.Fs = append(s.Fs, f)
 }
 
-func (s *StatsAggregator) addStackTrace(n string, st Stacktrace) {
+func (s *StatsAggregator) AddStackTrace(n string, st Stacktrace) {
 	fs := s.Fs[len(s.Fs)-1]
 
 	fs.addStackTrace(n, st)
 }
 
-func (s *StatsAggregator) addFuncStat(key string, nameFunc string, f FuncStat) {
+func (s *StatsAggregator) AddFuncStat(key string, nameFunc string, f FuncStat) {
 	fs := s.Fs[len(s.Fs)-1]
 
 	fs.addFuncStat(key, nameFunc, f)
 }
 
-func (s *StatsAggregator) addCounterStat(n string, cs CounterStat) {
+func (s *StatsAggregator) AddCounterStat(n string, cs CounterStat) {
 	fs := s.Fs[len(s.Fs)-1]
 
 	fs.addCounterStat(n, cs)
 }
 
-func (s *StatsAggregator) addUnbrokenRuleStat(n string, r RuleStat) {
+func (s *StatsAggregator) AddUnbrokenRuleStat(n string, r RuleStat) {
 	fs := s.Fs[len(s.Fs)-1]
 
 	fs.addUnbrokenRule(n, r)
 }
 
-func (s *StatsAggregator) addBrokenRuleStat(n string, r RuleStat) {
+func (s *StatsAggregator) AddBrokenRuleStat(n string, r RuleStat) {
 	fs := s.Fs[len(s.Fs)-1]
 
 	fs.addBrokenRule(n, r)
 }
 
-func (s *StatsAggregator) sumValuesToAverageUnbroken(id int, counter uint64, latency uint64) {
+func (s *StatsAggregator) SumValuesToAverageUnbroken(id int, counter uint64, latency uint64) {
 	ol := s.AvgUnbrokenRulesStats[id-1].Rule.Latency
 	oc := s.AvgUnbrokenRulesStats[id-1].Rule.Counter
 
@@ -61,7 +61,7 @@ func (s *StatsAggregator) sumValuesToAverageUnbroken(id int, counter uint64, lat
 	s.AvgUnbrokenRulesStats[id-1].Rule.Latency = nl
 }
 
-func (s *StatsAggregator) sumValuesToAverageBroken(id int, counter uint64, latency uint64) {
+func (s *StatsAggregator) SumValuesToAverageBroken(id int, counter uint64, latency uint64) {
 	ol := s.AvgBrokenRulesStats[id-1].Rule.Latency
 	oc := s.AvgBrokenRulesStats[id-1].Rule.Counter
 
@@ -71,7 +71,7 @@ func (s *StatsAggregator) sumValuesToAverageBroken(id int, counter uint64, laten
 	s.AvgBrokenRulesStats[id-1].Rule.Latency = nl
 }
 
-func (s *StatsAggregator) setTimes() {
+func (s *StatsAggregator) SetTimes() {
 	fsStart := s.Fs[0]
 	fsEnd := s.Fs[len(s.Fs)-1]
 
@@ -79,7 +79,7 @@ func (s *StatsAggregator) setTimes() {
 	s.EndTime = fsEnd.EndTime
 }
 
-func (s *StatsAggregator) sortAvgSlices() {
+func (s *StatsAggregator) SortAvgSlices() {
 	sort.SliceStable(s.AvgUnbrokenRulesStats, func(i, j int) bool {
 		return s.AvgUnbrokenRulesStats[i].Rule.Latency < s.AvgUnbrokenRulesStats[j].Rule.Latency
 	})

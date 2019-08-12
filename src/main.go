@@ -20,7 +20,7 @@ func main() {
 	tracerConf := new(configuration.TracerConfigurations)
 	err := tracerConf.UnmarshalYAML(*configFile)
 	if err != nil {
-		log.Fatalln("unable to load Falco configuration", err)
+		log.Fatalln("unable to load tracer configuration", err)
 	}
 
 	switch *mode {

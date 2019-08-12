@@ -19,6 +19,7 @@ type RecordConfiguration struct {
 }
 
 type ReportConfiguration struct {
+	Mode       string            `yaml:"mode,omitempty"`
 	ProgConfig ProgConfiguration `yaml:"prog_config,omitempty"`
 	Iterations int               `yaml:"iterations,omitempty"`
 }

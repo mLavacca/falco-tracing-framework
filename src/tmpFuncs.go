@@ -49,10 +49,10 @@ func tmpTrash() {
 
 	falcoTracer.statsAggregator.sortAvgSlices()
 
-	dumpJSONOnFile(jsonStats, outDir)
+	writeJSONOnFile(jsonStats, outDir)
 }
 
-func dumpJSONOnFile(jsonStats []byte, outDir string) {
+func writeJSONOnFile(jsonStats []byte, outDir string) {
 	f, err := os.Create(outDir + "tracer_data.json")
 	if err != nil {
 		fmt.Println(err)

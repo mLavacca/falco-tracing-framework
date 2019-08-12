@@ -1,6 +1,8 @@
 package falco_test
 
-import "configuration"
+import (
+	"configuration"
+)
 
 const (
 	N = 10000000

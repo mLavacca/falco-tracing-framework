@@ -4,12 +4,15 @@ import (
 	"configuration"
 	"log"
 	"os"
+	"os/exec"
 	"stats_getter"
 	"sync"
+	"time"
 )
 
 type onlineReporter struct {
-	reporter reporterData
+	reporter     reporterData
+	pullInterval time.Duration
 }
 
 func newOnlineReporter(conf configuration.OnlineReportConfiguration) *onlineReporter {
@@ -19,6 +22,8 @@ func newOnlineReporter(conf configuration.OnlineReportConfiguration) *onlineRepo
 	r.reporter.falcoargs = conf.ProgConfig.ProgArgs
 	r.reporter.outputFile = conf.OutputFile
 	r.reporter.mode = "online"
+
+	r.pullInterval = conf.PullInterval
 
 	return r
 }
@@ -31,6 +36,15 @@ func (r *onlineReporter) startReport() {
 
 	r.reporter.falcoTracer = stats_getter.NewFalcoTracer(r.reporter.mode)
 
+	bin := r.reporter.falcoBin
+	args := r.reporter.falcoargs
+
+	cmd := exec.Command(bin, args...)
+	err := cmd.Start()
+	if err != nil {
+		log.Fatalln("cmd.Start() failed with ", err)
+	}
+
 	var wg sync.WaitGroup
 	sigs := make(chan os.Signal)
 
@@ -39,7 +53,7 @@ func (r *onlineReporter) startReport() {
 	r.reporter.falcoTracer.FlushFalcoData()
 
 	wg.Add(1)
-	//go r.falcoTracer.LoadStatsFromFalco(time.Duration(1), &wg)
+	go r.reporter.falcoTracer.LoadOnlineStatsFromFalco(r.pullInterval, &wg)
 
 	<-sigs
 

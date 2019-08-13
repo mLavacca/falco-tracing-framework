@@ -2,8 +2,8 @@ package commands
 
 import (
 	"fmt"
+	"log"
 	"os"
-	"path/filepath"
 	"stats_getter"
 )
 
@@ -17,19 +17,16 @@ type reporterData struct {
 	falcoTracer *stats_getter.FalcoTracer
 }
 
-func writeMetricsOnFile(jsonStats []byte, outDir string) {
-	outpath := filepath.Join(outDir, "tracer_data.json")
+func writeMetricsOnFile(jsonStats []byte, outPath string) {
 
-	f, err := os.Create(outpath)
+	f, err := os.Create(outPath)
 	if err != nil {
-		fmt.Println(err)
-		return
+		log.Fatalln("Error in file creation", outPath, err)
 	}
 
 	l, err := f.Write(jsonStats)
 	if err != nil {
-		fmt.Println(err)
-		return
+		log.Fatalln("Error in json write", err)
 	}
 
 	fmt.Println("json output: ", l, "bytes written successfully")

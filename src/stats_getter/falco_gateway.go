@@ -7,9 +7,11 @@ import (
 	"syscall"
 )
 
-const rcvStatsSignal = 34
-const flushDataSignal = 35
-const rcvRulesNamesSignal = 36
+const (
+	rcvStatsSignal      = 34
+	flushDataSignal     = 35
+	rcvRulesNamesSignal = 36
+)
 
 type FalcoGateway struct {
 	mode          string
@@ -38,18 +40,10 @@ func newFalcoGateway(mode string) *FalcoGateway {
 	fg := new(FalcoGateway)
 	fg.mode = mode
 
-	var inputPath string
-
 	if mode == "online" {
-		inputPath = "/tmp/TO_DO"
 		fg.configureSignals()
 	}
 
-	if mode == "offline" {
-		inputPath = "/tmp/falco_tracer_file"
-	}
-
-	fg.inputFileName = inputPath
 	fg.openPipe()
 
 	return fg
@@ -59,10 +53,12 @@ func (f *FalcoGateway) openPipe() {
 	var err error
 
 	if f.mode == "online" {
-		f.pipeFile, err = os.OpenFile(f.inputFileName, os.O_RDONLY, os.ModeNamedPipe)
+		f.inputFileName = "/tmp/falco_tracer_pipe"
+		f.pipeFile, err = os.OpenFile(f.inputFileName, os.O_RDWR, os.ModeNamedPipe)
 	}
 
 	if f.mode == "offline" {
+		f.inputFileName = "/tmp/falco_tracer_file"
 		f.pipeFile, err = os.Open(f.inputFileName)
 	}
 

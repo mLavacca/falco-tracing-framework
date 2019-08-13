@@ -4,6 +4,8 @@ import (
 	"encoding/json"
 	"strconv"
 	"strings"
+	"sync"
+	"time"
 
 	m "metrics"
 )
@@ -31,7 +33,9 @@ func CloseFalcoTracer(f *FalcoTracer) {
 }
 
 func (f *FalcoTracer) LoadRulesFromFalco() {
-	f.falcoGateway.sendSigRcvRulesNames()
+	if f.falcoGateway.mode == "online" {
+		f.falcoGateway.sendSigRcvRulesNames()
+	}
 
 	for {
 		line := f.falcoGateway.getLine()
@@ -62,54 +66,60 @@ func (f *FalcoTracer) FlushFalcoData() {
 	f.falcoGateway.sendSigFlushData()
 }
 
-func (f *FalcoTracer) LoadStatsFromFalco( /*t time.Duration, wg *sync.WaitGroup*/ ) {
-	for f.ExitFlag == false {
-		//time.Sleep(t * time.Second)
+func (f *FalcoTracer) loadStatsFromFalco() {
+	for {
+		line := f.falcoGateway.getLine()
 
-		//f.falcoGateway.sendSigRcvSummary()
-
-		for {
-			line := f.falcoGateway.getLine()
-
-			if strings.Contains(string(line), "START SUMMARY") {
-				start, end := getTimesFromMessage(line)
-				f.StatsAggregator.AddFalcoStats(start, end)
-				continue
-			}
-
-			if strings.Contains(string(line), "START STACKTRACES") {
-				f.getStacktraces()
-				continue
-			}
-
-			if strings.Contains(string(line), "START COUNTERS") {
-				f.getCounters()
-				continue
-			}
-
-			if strings.Contains(string(line), "START UNBROKEN RULES") {
-				f.getUnbrokenRules()
-				continue
-			}
-
-			if strings.Contains(string(line), "START BROKEN RULES") {
-				f.getBrokenRules()
-				continue
-			}
-
-			if strings.Contains(string(line), "END SUMMARY") {
-				//f.FlushFalcoData()
-				if f.falcoGateway.mode == "offline" {
-					return
-				}
-				break
-			}
+		if strings.Contains(string(line), "START SUMMARY") {
+			start, end := getTimesFromMessage(line)
+			f.StatsAggregator.AddFalcoStats(start, end)
+			continue
 		}
+
+		if strings.Contains(string(line), "START STACKTRACES") {
+			f.getStacktraces()
+			continue
+		}
+
+		if strings.Contains(string(line), "START COUNTERS") {
+			f.getCounters()
+			continue
+		}
+
+		if strings.Contains(string(line), "START UNBROKEN RULES") {
+			f.getUnbrokenRules()
+			continue
+		}
+
+		if strings.Contains(string(line), "START BROKEN RULES") {
+			f.getBrokenRules()
+			continue
+		}
+
+		if strings.Contains(string(line), "END SUMMARY") {
+			break
+		}
+	}
+}
+
+func (f *FalcoTracer) LoadOfflineStatsFromFalco() {
+	f.loadStatsFromFalco()
+}
+
+func (f *FalcoTracer) LoadOnlineStatsFromFalco(t time.Duration, wg *sync.WaitGroup) {
+	for f.ExitFlag == false {
+		time.Sleep(t * time.Second)
+
+		f.loadStatsFromFalco()
+
+		f.FlushFalcoData()
+
+		f.falcoGateway.sendSigRcvSummary()
 	}
 
 	f.StatsAggregator.SetTimes()
 
-	//wg.Done()
+	wg.Done()
 }
 
 func (f *FalcoTracer) getStacktraces() {

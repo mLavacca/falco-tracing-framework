@@ -20,6 +20,7 @@ online_report:
     prog_bin: /home/mattia/falco-root/falco/build/userspace/falco/falco
     prog_args: 
   output_file: /home/mattia/falco_metrics.json
+  pull_interval: 1
 
 rules_breakers:
   - rule: Error File below / or /root opened for writing

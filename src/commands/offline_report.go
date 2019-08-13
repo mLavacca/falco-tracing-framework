@@ -28,7 +28,6 @@ func newOfflineReporter(conf configuration.OfflineReportConfiguration) *offlineR
 
 func (or *offlineReporter) report() {
 	or.startReport()
-	or.getOfflineStats()
 }
 
 func (r *offlineReporter) startReport() {
@@ -52,10 +51,11 @@ func (r *offlineReporter) startReport() {
 
 		stats_getter.CloseFalcoTracer(r.reporter.falcoTracer)
 	}
+
 }
 
 func (r *offlineReporter) getOfflineStats() {
-	r.reporter.falcoTracer.LoadStatsFromFalco()
+	r.reporter.falcoTracer.LoadOfflineStatsFromFalco()
 
 	jsonStats, err := r.reporter.falcoTracer.MarshalJSON()
 	if err != nil {

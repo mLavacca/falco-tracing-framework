@@ -16,7 +16,7 @@ type Recorder struct {
 	tester *falco_test.Tester
 }
 
-func NewRecorder(conf configuration.TracerConfigurations) *Recorder {
+func newRecorder(conf configuration.TracerConfigurations) *Recorder {
 	r := new(Recorder)
 
 	r.sysdigBin = conf.Record.ProgConfig.ProgBin
@@ -26,7 +26,7 @@ func NewRecorder(conf configuration.TracerConfigurations) *Recorder {
 	return r
 }
 
-func (r *Recorder) StartRecord() {
+func (r *Recorder) startRecord() {
 
 	cmd := exec.Command(r.sysdigBin, r.sysdigArgs...)
 
@@ -46,6 +46,6 @@ func (r *Recorder) StartRecord() {
 	}
 }
 
-func (r *Recorder) Rollback() {
+func (r *Recorder) rollback() {
 	r.tester.RunAllRollbacks()
 }

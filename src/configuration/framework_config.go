@@ -2,6 +2,7 @@ package configuration
 
 import (
 	"io/ioutil"
+	"time"
 
 	"gopkg.in/yaml.v2"
 )
@@ -26,8 +27,9 @@ type OfflineReportConfiguration struct {
 }
 
 type OnlineReportConfiguration struct {
-	ProgConfig ProgConfiguration `yaml:"prog_config,omitempty"`
-	OutputFile string            `yaml:"output_file,omitempty"`
+	ProgConfig   ProgConfiguration `yaml:"prog_config,omitempty"`
+	OutputFile   string            `yaml:"output_file,omitempty"`
+	PullInterval time.Duration     `yaml:"pull_interval,omitempty"`
 }
 
 type ProgConfiguration struct {

@@ -34,8 +34,6 @@ func (or *onlineReporter) report() {
 
 func (r *onlineReporter) startReport() {
 
-	r.reporter.falcoTracer = stats_getter.NewFalcoTracer(r.reporter.mode)
-
 	bin := r.reporter.falcoBin
 	args := r.reporter.falcoargs
 
@@ -45,10 +43,12 @@ func (r *onlineReporter) startReport() {
 		log.Fatalln("cmd.Start() failed with ", err)
 	}
 
+	r.reporter.falcoTracer = stats_getter.NewFalcoTracer(r.reporter.mode)
+
 	var wg sync.WaitGroup
 	sigs := make(chan os.Signal)
 
-	r.reporter.falcoTracer.LoadRulesFromFalco()
+	r.reporter.falcoTracer.LoadOnlineRulesFromFalco()
 
 	r.reporter.falcoTracer.FlushFalcoData()
 

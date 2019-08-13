@@ -49,13 +49,10 @@ func (r *offlineReporter) startReport() {
 
 		r.getOfflineStats()
 
-		stats_getter.CloseFalcoTracer(r.reporter.falcoTracer)
+		stats_getter.CloseFalcoGateway(r.reporter.falcoTracer)
 	}
 
-}
-
-func (r *offlineReporter) getOfflineStats() {
-	r.reporter.falcoTracer.LoadOfflineStatsFromFalco()
+	r.reporter.falcoTracer.LoadOfflineRulesFromFalco()
 
 	jsonStats, err := r.reporter.falcoTracer.MarshalJSON()
 	if err != nil {
@@ -65,4 +62,8 @@ func (r *offlineReporter) getOfflineStats() {
 	r.reporter.falcoTracer.StatsAggregator.SortAvgSlices()
 
 	writeMetricsOnFile(jsonStats, r.reporter.outputFile)
+}
+
+func (r *offlineReporter) getOfflineStats() {
+	r.reporter.falcoTracer.LoadOfflineStatsFromFalco()
 }

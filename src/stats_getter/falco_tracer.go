@@ -28,14 +28,22 @@ func NewFalcoTracer(mode string) *FalcoTracer {
 	return f
 }
 
-func CloseFalcoTracer(f *FalcoTracer) {
+func CloseFalcoGateway(f *FalcoTracer) {
 	f.falcoGateway.closePipe()
 }
 
-func (f *FalcoTracer) LoadRulesFromFalco() {
-	if f.falcoGateway.mode == "online" {
-		f.falcoGateway.sendSigRcvRulesNames()
-	}
+func (f *FalcoTracer) LoadOfflineRulesFromFalco() {
+	f.falcoGateway.openPipeForRules()
+	f.loadRulesFromFalco()
+	f.falcoGateway.closePipe()
+}
+
+func (f *FalcoTracer) LoadOnlineRulesFromFalco() {
+	f.falcoGateway.sendSigRcvRulesNames()
+	f.loadRulesFromFalco()
+}
+
+func (f *FalcoTracer) loadRulesFromFalco() {
 
 	for {
 		line := f.falcoGateway.getLine()

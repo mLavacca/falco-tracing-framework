@@ -55,15 +55,36 @@ func (f *FalcoGateway) openPipe() {
 	if f.mode == "online" {
 		f.inputFileName = "/tmp/falco_tracer_pipe"
 		f.pipeFile, err = os.OpenFile(f.inputFileName, os.O_RDWR, os.ModeNamedPipe)
+
+		if err != nil {
+			log.Fatal("Open named pipe file error", err)
+		}
 	}
 
 	if f.mode == "offline" {
 		f.inputFileName = "/tmp/falco_tracer_file"
 		f.pipeFile, err = os.Open(f.inputFileName)
+
+		if err != nil {
+			log.Fatal("Open file error", err)
+		}
 	}
 
+	f.pipeReader = bufio.NewReader(f.pipeFile)
+	if f.pipeReader == nil {
+		log.Fatal("bufio reader opening error")
+	}
+}
+
+func (f *FalcoGateway) openPipeForRules() {
+
+	var err error
+
+	f.inputFileName = "/tmp/falco_rules_names"
+	f.pipeFile, err = os.Open(f.inputFileName)
+
 	if err != nil {
-		log.Fatal("Open named pipe file error")
+		log.Fatal("Open file error", err)
 	}
 
 	f.pipeReader = bufio.NewReader(f.pipeFile)
@@ -88,7 +109,7 @@ func (f *FalcoGateway) getLine() string {
 	line, err := f.pipeReader.ReadBytes('\n')
 
 	if err != nil {
-		log.Fatal("error, pipe file broken")
+		log.Fatal("error, pipe file broken; ", err)
 	}
 
 	return string(line)

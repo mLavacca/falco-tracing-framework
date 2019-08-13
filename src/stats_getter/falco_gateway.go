@@ -2,7 +2,6 @@ package stats_getter
 
 import (
 	"bufio"
-	"fmt"
 	"log"
 	"os"
 	"syscall"
@@ -34,7 +33,7 @@ func (f *FalcoGateway) configureSignals() {
 	f.sigFlushData = syscall.Signal(flushDataSignal)
 }
 
-func NewFalcoGateway(mode string) *FalcoGateway {
+func newFalcoGateway(mode string) *FalcoGateway {
 
 	fg := new(FalcoGateway)
 	fg.mode = mode
@@ -77,14 +76,24 @@ func (f *FalcoGateway) openPipe() {
 	}
 }
 
+func (fg *FalcoGateway) closePipe() {
+	err := fg.pipeFile.Close()
+	if err != nil {
+		log.Fatalln("error during file closing", err)
+	}
+
+	err = os.Remove(fg.inputFileName)
+	if err != nil {
+		log.Fatalln("error during file removing", err)
+	}
+}
+
 func (f *FalcoGateway) getLine() string {
 	line, err := f.pipeReader.ReadBytes('\n')
 
 	if err != nil {
 		log.Fatal("error, pipe file broken")
 	}
-
-	fmt.Println(string(line))
 
 	return string(line)
 }

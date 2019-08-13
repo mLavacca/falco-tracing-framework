@@ -8,7 +8,8 @@ import (
 
 type TracerConfigurations struct {
 	Record           RecordConfiguration            `yaml:"record,omitempty"`
-	Report           ReportConfiguration            `yaml:"report,omitempty"`
+	OfflineReport    OfflineReportConfiguration     `yaml:"offline_report,omitempty"`
+	OnlineReport     OnlineReportConfiguration      `yaml:"online_report,omitempty"`
 	RulesBreakers    []RulesBreakersConfiguration   `yaml:"rules_breakers"`
 	BreakingProfiles []BreakingProfileConfiguration `yaml:"breaking_profiles"`
 }
@@ -18,10 +19,15 @@ type RecordConfiguration struct {
 	BreakingProfile string            `yaml:"breaking_profile,omitempty"`
 }
 
-type ReportConfiguration struct {
-	Mode       string            `yaml:"mode,omitempty"`
+type OfflineReportConfiguration struct {
 	ProgConfig ProgConfiguration `yaml:"prog_config,omitempty"`
+	OutputFile string            `yaml:"output_file,omitempty"`
 	Iterations int               `yaml:"iterations,omitempty"`
+}
+
+type OnlineReportConfiguration struct {
+	ProgConfig ProgConfiguration `yaml:"prog_config,omitempty"`
+	OutputFile string            `yaml:"output_file,omitempty"`
 }
 
 type ProgConfiguration struct {

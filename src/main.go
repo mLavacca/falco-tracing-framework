@@ -1,7 +1,7 @@
 package main
 
 import (
-	"commands"
+	cmd "commands"
 	"configuration"
 	"flag"
 	"log"
@@ -9,11 +9,8 @@ import (
 
 func main() {
 
-	var recorder *commands.Recorder
-	var reporter *commands.Reporter
-
 	var configFile = flag.String("c", "config.yaml", "configuration yaml file")
-	var mode = flag.String("m", "record", "working mode: record, report or compare")
+	var command = flag.String("m", "record", "working mode: record, report or compare")
 
 	flag.Parse()
 
@@ -23,13 +20,5 @@ func main() {
 		log.Fatalln("unable to load tracer configuration", err)
 	}
 
-	switch *mode {
-	case "record":
-		recorder = commands.NewRecorder(*tracerConf)
-		recorder.StartRecord()
-		recorder.Rollback()
-	case "report":
-		reporter = commands.NewReporter(*tracerConf)
-		reporter.StartReport()
-	}
+	cmd.DispatchCommand(*command, *tracerConf)
 }

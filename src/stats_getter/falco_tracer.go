@@ -19,11 +19,15 @@ func NewFalcoTracer(mode string) *FalcoTracer {
 
 	f := new(FalcoTracer)
 
-	f.falcoGateway = NewFalcoGateway(mode)
+	f.falcoGateway = newFalcoGateway(mode)
 	f.StatsAggregator = new(m.StatsAggregator)
 	f.rulesAggregator = m.NewRulesAggregator()
 
 	return f
+}
+
+func CloseFalcoTracer(f *FalcoTracer) {
+	f.falcoGateway.closePipe()
 }
 
 func (f *FalcoTracer) LoadRulesFromFalco() {

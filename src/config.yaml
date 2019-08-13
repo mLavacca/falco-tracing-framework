@@ -6,14 +6,20 @@ record:
       - "/tmp/falco_tester.scap"
   breaking_profile: interleaved2
     
-report:
-  mode: offline
+offline_report:
   prog_config: 
     prog_bin: /home/mattia/falco-root/falco/build/userspace/falco/falco
     prog_args:
       - "-e"
-      - "/tmp/falco_tester.scap"  
+      - "/tmp/falco_tester.scap"
+  output_file: /home/mattia/falco_metrics.json
   iterations: 100
+
+online_report:
+  prog_config: 
+    prog_bin: /home/mattia/falco-root/falco/build/userspace/falco/falco
+    prog_args: 
+  output_file: /home/mattia/falco_metrics.json
 
 rules_breakers:
   - rule: Error File below / or /root opened for writing

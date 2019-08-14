@@ -4,7 +4,7 @@ record:
     prog_args:
       - "-w"
       - "/tmp/falco_tester.scap"
-  breaking_profile: interleaved2
+  breaking_profile: flat
     
 offline_report:
   prog_config: 
@@ -23,18 +23,21 @@ online_report:
   pull_interval: 1
 
 rules_breakers:
-  - rule: Error File below / or /root opened for writing
+  - rule: Error file below / or /root opened for writing
     rule_id: 0
 
   - rule: Write below etc
     rule_id: 1
 
+  - rule: Modify Shell configuration file
+    rule_id: 2
+
 breaking_profiles:
   - name: flat
-    sequence: [[0], [1]]
+    sequence: [[0], [1], [2]]
     rollback_sequence: [0, 1]
     ratio: 5
-    limit: 1000
+    limit: 5
 
   - name: interleaved1
     sequence: [[0, 1]]

@@ -5,6 +5,9 @@ import (
 	"strings"
 )
 
+type FalcoOfflineStats struct {
+}
+
 type Falcostats struct {
 	StartTime     uint64                 `json:"start time"`
 	EndTime       uint64                 `json:"end time"`

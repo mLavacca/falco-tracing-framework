@@ -35,17 +35,17 @@ func (r *offlineReporter) startReport() {
 	bin := r.reporter.falcoBin
 	args := r.reporter.falcoargs
 
-	cmd := exec.Command(bin, args...)
-
-	r.iterations = 1
+	r.reporter.falcoTracer = stats_getter.NewFalcoTracer(r.reporter.mode)
 
 	for i := 0; i < r.iterations; i++ {
+		cmd := exec.Command(bin, args...)
+
 		err := cmd.Run()
 		if err != nil {
-			log.Fatalln("cmd.Start() failed with ", err)
+			log.Fatalln("cmd.Run() failed with ", err)
 		}
 
-		r.reporter.falcoTracer = stats_getter.NewFalcoTracer(r.reporter.mode)
+		stats_getter.OpenFalcoGateway(r.reporter.falcoTracer)
 
 		r.getOfflineStats()
 
@@ -58,8 +58,6 @@ func (r *offlineReporter) startReport() {
 	if err != nil {
 		log.Fatal("error in object marshaling")
 	}
-
-	r.reporter.falcoTracer.StatsAggregator.SortAvgSlices()
 
 	writeMetricsOnFile(jsonStats, r.reporter.outputFile)
 }

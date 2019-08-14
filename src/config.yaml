@@ -4,7 +4,7 @@ record:
     prog_args:
       - "-w"
       - "/tmp/falco_tester.scap"
-  breaking_profile: flat
+  breaking_profile: interleaved2
     
 offline_report:
   prog_config: 
@@ -13,7 +13,7 @@ offline_report:
       - "-e"
       - "/tmp/falco_tester.scap"
   output_file: /home/mattia/falco_metrics.json
-  iterations: 100
+  iterations: 5
 
 online_report:
   prog_config: 
@@ -23,15 +23,31 @@ online_report:
   pull_interval: 1
 
 rules_breakers:
-  - rule: Error file below / or /root opened for writing
+  - rule: Disallowed SSH connection
     rule_id: 0
-
-  - rule: Write below etc
+  - rule: Unexpected outbound connection destination
     rule_id: 1
-
-  - rule: Modify Shell configuration file
+  - rule: Unexpected inbound connection source
     rule_id: 2
-
+  - rule: Modify Shell configuration file
+    rule_id: 3
+  - rule: Read Shell Configuration File
+    rule_id: 4
+  - rule: Schedule Cron Jobs
+    rule_id: 5
+  - rule: Update Package Repository
+    rule_id: 6
+  - rule: Write below binary dir
+    rule_id: 7
+  - rule: Write below monitored dir
+    rule_id: 8
+  - rule: Read ssh information
+    rule_id: 9
+  - rule: Write below etc
+    rule_id: 10
+  - rule: Error file below / or /root opened for writing
+    rule_id: 11
+  
 breaking_profiles:
   - name: flat
     sequence: [[0], [1], [2]]

@@ -7,9 +7,10 @@ import (
 )
 
 var testFunctions = map[int]interface{}{
-	0: writeBelowRoot,
-	1: writeBelowEtc,
-	2: modifyShellConfigurationFile,
+	3:  modifyShellConfigurationFile,
+	6:  updatePackageRepository,
+	10: writeBelowEtc,
+	11: writeBelowRoot,
 }
 
 var testRollbacks = map[int]interface{}{
@@ -17,9 +18,6 @@ var testRollbacks = map[int]interface{}{
 	1: writeBelowEtcRollback,
 }
 
-/*
- * id = 0
- */
 func writeBelowRoot() {
 	path := "/falco_tester_file"
 	openFile(path, os.O_RDWR|os.O_CREATE)
@@ -30,9 +28,6 @@ func writeBelowRootRollback() {
 	deleteFile(path)
 }
 
-/*
- * id = 1
- */
 func writeBelowEtc() {
 	path := "/etc/falco_tester_file"
 	openFile(path, os.O_RDWR|os.O_CREATE)
@@ -43,9 +38,6 @@ func writeBelowEtcRollback() {
 	deleteFile(path)
 }
 
-/*
- * id = 2
- */
 func modifyShellConfigurationFile() {
 	username, err := getUsername()
 	if err != nil {
@@ -53,5 +45,10 @@ func modifyShellConfigurationFile() {
 	}
 
 	path := path.Join("/home", username, "/.bashrc")
+	openFile(path, os.O_RDWR)
+}
+
+func updatePackageRepository() {
+	path := "/etc/apt/sources.list"
 	openFile(path, os.O_RDWR)
 }

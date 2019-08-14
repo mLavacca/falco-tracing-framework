@@ -44,8 +44,6 @@ func newFalcoGateway(mode string) *FalcoGateway {
 		fg.configureSignals()
 	}
 
-	fg.openPipe()
-
 	return fg
 }
 

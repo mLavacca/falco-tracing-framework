@@ -66,7 +66,5 @@ func (r *onlineReporter) startReport() {
 		log.Fatal("error in object marshaling")
 	}
 
-	r.reporter.falcoTracer.StatsAggregator.SortAvgSlices()
-
 	writeMetricsOnFile(jsonStats, r.reporter.outputFile)
 }

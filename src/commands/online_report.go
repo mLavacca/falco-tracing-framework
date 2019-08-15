@@ -61,10 +61,10 @@ func (r *onlineReporter) startReport() {
 
 	wg.Wait()
 
-	jsonStats, err := r.reporter.falcoTracer.MarshalJSON()
+	//jsonStats, err := r.reporter.falcoTracer.MarshalJSON()
 	if err != nil {
 		log.Fatal("error in object marshaling")
 	}
 
-	writeMetricsOnFile(jsonStats, r.reporter.outputFile)
+	//writeMetricsOnFile(jsonStats, r.reporter.outputFile)
 }

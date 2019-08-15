@@ -54,7 +54,9 @@ func (r *offlineReporter) startReport() {
 
 	r.reporter.falcoTracer.LoadOfflineRulesFromFalco()
 
-	jsonStats, err := r.reporter.falcoTracer.MarshalJSON()
+	metr := r.reporter.falcoTracer.OfflineAvg()
+
+	jsonStats, err := r.reporter.falcoTracer.MarshalOfflineJSON(metr)
 	if err != nil {
 		log.Fatal("error in object marshaling")
 	}

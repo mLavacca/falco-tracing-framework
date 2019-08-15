@@ -32,7 +32,6 @@ type Stacktrace struct {
 }
 
 type FuncStat struct {
-	Counter uint64 `json:"counter"`
 	Latency uint64 `json:"latency"`
 	Caller  string `json:"caller"`
 }
@@ -99,11 +98,9 @@ func NewFuncStat(line string) (string, *FuncStat) {
 	tracerLine := getTracerLine(line)
 
 	name := tracerLine[1]
-	counter, _ := strconv.ParseUint(tracerLine[2], 10, 64)
 	latency, _ := strconv.ParseUint(tracerLine[3], 10, 64)
 	caller := tracerLine[4]
 
-	f.Counter = counter
 	f.Latency = latency
 	f.Caller = caller
 

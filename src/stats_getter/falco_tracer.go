@@ -257,12 +257,61 @@ func getTimesFromMessage(line string) (uint64, uint64) {
 	return start, end
 }
 
-func (f *FalcoTracer) MarshalJSON() ([]byte, error) {
-	return json.Marshal(&struct {
-		Metrics m.OfflineMetrics  `json:"metrics"`
-		Rules   m.RulesAggregator `json:"rules"`
-	}{
-		Metrics: *f.offlineMetrics,
-		Rules:   *f.rulesAggregator,
-	})
+func (f *FalcoTracer) OfflineAvg() m.FalcoMetrics {
+	var metr m.FalcoMetrics
+
+	metr = f.offlineMetrics.Fm[0].Metrics
+
+	// stacktrace avg computation
+	for i, om := range f.offlineMetrics.Fm[1:] {
+		sts1 := metr.Stacktraces
+		sts2 := om.Metrics.Stacktraces
+
+		var j uint64 = uint64(i) + 1
+
+		stacktraceMap := make(map[string]m.Stacktrace)
+		for k, v := range sts2 {
+
+			var st m.Stacktrace
+			st.Counter = v.Counter
+
+			funcMap := make(map[string]m.FuncStat)
+			for ki, vi := range v.Functions {
+				var f m.FuncStat
+
+				f.Latency = (vi.Latency + (sts1[k].Functions[ki].Latency * j)) / (j + 1)
+				f.Caller = vi.Caller
+
+				funcMap[ki] = f
+			}
+
+			st.Functions = funcMap
+			stacktraceMap[k] = st
+		}
+
+		metr.Stacktraces = stacktraceMap
+	}
+
+	// counter avg computation
+	for i, om := range f.offlineMetrics.Fm[1:] {
+		cts1 := metr.CounterStats
+		cts2 := om.Metrics.CounterStats
+
+		var j uint64 = uint64(i) + 1
+
+		counterMap := make(map[string]m.CounterStat)
+		for k, v := range cts2 {
+			var c m.CounterStat
+
+			c.Counter = (v.Counter + (cts1[k].Counter * j)) / (j + 1)
+			counterMap[k] = c
+		}
+		metr.CounterStats = counterMap
+	}
+
+	return metr
+}
+
+func (f *FalcoTracer) MarshalOfflineJSON(metr m.FalcoMetrics) ([]byte, error) {
+	return json.Marshal(metr)
 }

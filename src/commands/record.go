@@ -32,7 +32,7 @@ func (r *Recorder) startRecord() {
 
 	err := cmd.Start()
 	if err != nil {
-		log.Fatalln("cmd.Run() failed with ", err)
+		log.Fatalln("cmd.Start() failed with ", err)
 	}
 
 	time.Sleep(3 * time.Second)
@@ -44,8 +44,15 @@ func (r *Recorder) startRecord() {
 	if err := cmd.Process.Signal(syscall.SIGTERM); err != nil {
 		log.Fatalln("failed to kill process: ", err)
 	}
+
+	cmd.Wait()
 }
 
 func (r *Recorder) rollback() {
 	r.tester.RunAllRollbacks()
+}
+
+func (r *Recorder) Record() {
+	r.startRecord()
+	r.rollback()
 }

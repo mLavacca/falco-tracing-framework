@@ -4,7 +4,7 @@ record:
     prog_args:
       - "-w"
       - "/tmp/falco_tester.scap"
-  breaking_profile: interleaved2
+  breaking_profile: flat
     
 offline_report:
   prog_config: 
@@ -50,8 +50,8 @@ rules_breakers:
   
 breaking_profiles:
   - name: flat
-    sequence: [[0], [1], [2]]
-    rollback_sequence: [0, 1]
+    sequence: [[6], [10], [11]]
+    rollback_sequence: [10]
     ratio: 5
     limit: 5
 

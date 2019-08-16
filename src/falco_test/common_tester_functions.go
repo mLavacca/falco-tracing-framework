@@ -49,5 +49,21 @@ func getUsername() (string, error) {
 			return f.Name(), nil
 		}
 	}
+
 	return "", errors.New("error in finding users")
+}
+
+func getFilename(dir string) (string, error) {
+	files, err := ioutil.ReadDir(dir)
+	if err != nil {
+		log.Fatalln(err)
+	}
+
+	for _, f := range files {
+		if f.IsDir() == false {
+			return f.Name(), nil
+		}
+	}
+
+	return "", errors.New("error in finding filename")
 }

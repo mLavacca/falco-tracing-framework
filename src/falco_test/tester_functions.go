@@ -9,33 +9,39 @@ import (
 var testFunctions = map[int]interface{}{
 	3:  modifyShellConfigurationFile,
 	6:  updatePackageRepository,
+	7:  writeBelowBinaryDir,
+	8:  writeBelowMonitoredDir,
 	10: writeBelowEtc,
 	11: writeBelowRoot,
+	12: readSensitiveFilesAfterStartup,
+	13: readSensitiveFileUntrusted,
 }
 
 var testRollbacks = map[int]interface{}{
-	0: writeBelowRootRollback,
-	1: writeBelowEtcRollback,
+	7:  writeBelowBinaryDirRollback,
+	9:  writeBelowMonitoredDirRollback,
+	10: writeBelowEtcRollback,
+	11: writeBelowRootRollback,
 }
 
 func writeBelowRoot() {
-	path := "/falco_tester_file"
-	openFile(path, os.O_RDWR|os.O_CREATE)
+	filePath := "/falco_tester_file"
+	openFile(filePath, os.O_RDWR|os.O_CREATE)
 }
 
 func writeBelowRootRollback() {
-	path := "/falco_tester_file"
-	deleteFile(path)
+	filePath := "/falco_tester_file"
+	deleteFile(filePath)
 }
 
 func writeBelowEtc() {
-	path := "/etc/falco_tester_file"
-	openFile(path, os.O_RDWR|os.O_CREATE)
+	filePath := "/etc/falco_tester_file"
+	openFile(filePath, os.O_RDWR|os.O_CREATE)
 }
 
 func writeBelowEtcRollback() {
-	path := "/etc/falco_tester_file"
-	deleteFile(path)
+	filePath := "/etc/falco_tester_file"
+	deleteFile(filePath)
 }
 
 func modifyShellConfigurationFile() {
@@ -44,11 +50,40 @@ func modifyShellConfigurationFile() {
 		log.Fatalln(err)
 	}
 
-	path := path.Join("/home", username, "/.bashrc")
-	openFile(path, os.O_RDWR)
+	filePath := path.Join("/home", username, "/.bashrc")
+	openFile(filePath, os.O_RDWR)
 }
 
 func updatePackageRepository() {
-	path := "/etc/apt/sources.list"
-	openFile(path, os.O_RDWR)
+	filePath := "/etc/apt/sources.list"
+	openFile(filePath, os.O_RDWR)
+}
+
+func writeBelowBinaryDir() {
+	filePath := "/usr/sbin/falco_tester_file"
+	openFile(filePath, os.O_RDWR|os.O_CREATE)
+}
+
+func writeBelowBinaryDirRollback() {
+	filePath := "/usr/sbin/falco_tester_file"
+	deleteFile(filePath)
+}
+
+func writeBelowMonitoredDir() {
+	filePath := "/usr/local/bin/falco_tester_file"
+	openFile(filePath, os.O_RDWR|os.O_CREATE)
+}
+
+func writeBelowMonitoredDirRollback() {
+	filePath := "/usr/local/bin/falco_tester_file"
+	deleteFile(filePath)
+}
+
+func readSensitiveFilesAfterStartup() {
+
+}
+
+func readSensitiveFileUntrusted() {
+	filePath := "/etc/pam.d/login"
+	openFile(filePath, os.O_RDONLY)
 }

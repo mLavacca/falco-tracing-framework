@@ -73,8 +73,6 @@ func (f *FalcoTracer) loadRulesFromFalco() {
 		}
 
 		f.rulesAggregator.AddRule(*r)
-
-		//rs := m.NewruleStatavg(r.Name, r.Id)
 	}
 
 	f.rulesAggregator.SetNRules()
@@ -90,6 +88,7 @@ func (f *FalcoTracer) loadStatsFromFalco() {
 
 		if strings.Contains(string(line), "START SUMMARY") {
 			//start, end := getTimesFromMessage(line)
+			f.offlineMetrics.AddOfflineMetrics()
 			continue
 		}
 
@@ -120,29 +119,7 @@ func (f *FalcoTracer) loadStatsFromFalco() {
 }
 
 func (f *FalcoTracer) LoadOfflineStatsFromFalco() {
-	for {
-		line := f.falcoGateway.getLine()
-
-		if strings.Contains(string(line), "START SUMMARY") {
-			//start, end := getTimesFromMessage(line)
-			f.offlineMetrics.AddOfflineMetrics()
-			continue
-		}
-
-		if strings.Contains(string(line), "START STACKTRACES") {
-			f.getStacktraces()
-			continue
-		}
-
-		if strings.Contains(string(line), "START COUNTERS") {
-			f.getCounters()
-			continue
-		}
-
-		if strings.Contains(string(line), "END SUMMARY") {
-			break
-		}
-	}
+	f.loadStatsFromFalco()
 }
 
 func (f *FalcoTracer) LoadOnlineStatsFromFalco(t time.Duration, wg *sync.WaitGroup) {
@@ -155,8 +132,6 @@ func (f *FalcoTracer) LoadOnlineStatsFromFalco(t time.Duration, wg *sync.WaitGro
 
 		f.falcoGateway.sendSigRcvSummary()
 	}
-
-	//f.StatsAggregator.SetTimes()
 
 	wg.Done()
 }
@@ -222,10 +197,14 @@ func (f *FalcoTracer) getUnbrokenRules() {
 			break
 		}
 
-		//name, ur := m.NewRuleStat(line, f.rulesAggregator)
-		//f.StatsAggregator.AddUnbrokenRuleStat(name, *ur)
+		name, ur := m.NewRuleStat(line, f.rulesAggregator)
 
-		//f.StatsAggregator.SumValuesToAverageUnbroken(ur.Id, ur.Counter, ur.Latency)
+		if f.falcoGateway.mode == "online" {
+		}
+
+		if f.falcoGateway.mode == "offline" {
+			f.offlineMetrics.AddUnbrokenRuleMetric(name, *ur)
+		}
 	}
 }
 
@@ -238,10 +217,14 @@ func (f *FalcoTracer) getBrokenRules() {
 			break
 		}
 
-		//name, br := m.NewRuleStat(line, f.rulesAggregator)
-		//f.StatsAggregator.AddBrokenRuleStat(name, *br)
+		name, ur := m.NewRuleStat(line, f.rulesAggregator)
 
-		//f.StatsAggregator.SumValuesToAverageBroken(br.Id, br.Counter, br.Latency)
+		if f.falcoGateway.mode == "online" {
+		}
+
+		if f.falcoGateway.mode == "offline" {
+			f.offlineMetrics.AddBrokenRuleMetric(name, *ur)
+		}
 	}
 }
 
@@ -257,10 +240,10 @@ func getTimesFromMessage(line string) (uint64, uint64) {
 	return start, end
 }
 
-func (f *FalcoTracer) OfflineAvg() m.FalcoMetrics {
-	var metr m.FalcoMetrics
-
-	metr = f.offlineMetrics.Fm[0].Metrics
+func (f *FalcoTracer) OfflineAvg() m.OfflineFalcoMetrics {
+	var metr m.FalcoMetrics = f.offlineMetrics.Fm[0].Metrics
+	var avgUnbroken = f.offlineMetrics.Fm[0].UnbrokenRuleMetrics
+	var avgBroken = f.offlineMetrics.Fm[0].BrokenRuleMetrics
 
 	// stacktrace avg computation
 	for i, om := range f.offlineMetrics.Fm[1:] {
@@ -309,9 +292,54 @@ func (f *FalcoTracer) OfflineAvg() m.FalcoMetrics {
 		metr.CounterStats = counterMap
 	}
 
-	return metr
+	// unbroken rules avg computation
+	for i, om := range f.offlineMetrics.Fm[1:] {
+		urm1 := avgUnbroken
+		urm2 := om.UnbrokenRuleMetrics
+
+		var j uint64 = uint64(i) + 1
+
+		ruleMap := make(map[string]m.RuleStat)
+		for k, v := range urm2 {
+			var r m.RuleStat
+
+			r.Id = v.Id
+			r.Tag = v.Tag
+			r.Counter = (v.Counter + (urm1[k].Counter * j)) / (j + 1)
+			r.Latency = (v.Latency + (urm1[k].Latency * j)) / (j + 1)
+			ruleMap[k] = r
+		}
+		avgUnbroken = ruleMap
+	}
+
+	// broken rules avg computation
+	for i, om := range f.offlineMetrics.Fm[1:] {
+		brm1 := avgBroken
+		brm2 := om.BrokenRuleMetrics
+
+		var j uint64 = uint64(i) + 1
+
+		ruleMap := make(map[string]m.RuleStat)
+		for k, v := range brm2 {
+			var r m.RuleStat
+
+			r.Id = v.Id
+			r.Tag = v.Tag
+			r.Counter = (v.Counter + (brm1[k].Counter * j)) / (j + 1)
+			r.Latency = (v.Latency + (brm1[k].Latency * j)) / (j + 1)
+
+			ruleMap[k] = r
+		}
+		avgBroken = ruleMap
+	}
+
+	return m.OfflineFalcoMetrics{
+		Metrics:             metr,
+		UnbrokenRuleMetrics: avgUnbroken,
+		BrokenRuleMetrics:   avgBroken,
+	}
 }
 
-func (f *FalcoTracer) MarshalOfflineJSON(metr m.FalcoMetrics) ([]byte, error) {
+func (f *FalcoTracer) MarshalOfflineJSON(metr m.OfflineFalcoMetrics) ([]byte, error) {
 	return json.Marshal(metr)
 }

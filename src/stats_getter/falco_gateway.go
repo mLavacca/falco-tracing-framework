@@ -2,7 +2,6 @@ package stats_getter
 
 import (
 	"bufio"
-	"fmt"
 	"log"
 	"os"
 	"syscall"
@@ -106,8 +105,6 @@ func (fg *FalcoGateway) closePipe() {
 
 func (f *FalcoGateway) getLine() string {
 	line, err := f.pipeReader.ReadBytes('\n')
-
-	fmt.Println(string(line))
 
 	if err != nil {
 		log.Fatal("error, pipe file broken; ", err)

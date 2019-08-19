@@ -13,15 +13,20 @@ type Recorder struct {
 	sysdigBin  string
 	sysdigArgs []string
 
-	tester *falco_test.Tester
+	duration int
+	tester   *falco_test.Tester
 }
 
 func newRecorder(conf configuration.TracerConfigurations) *Recorder {
 	r := new(Recorder)
+	var d int
 
 	r.sysdigBin = conf.Record.ProgConfig.ProgBin
 	r.sysdigArgs = conf.Record.ProgConfig.ProgArgs
-	r.tester = falco_test.NewTester(conf)
+	r.tester, d = falco_test.NewTester(conf)
+	if r.tester == nil {
+		r.duration = d
+	}
 
 	return r
 }
@@ -35,11 +40,13 @@ func (r *Recorder) startRecord() {
 		log.Fatalln("cmd.Start() failed with ", err)
 	}
 
-	time.Sleep(3 * time.Second)
-
-	r.tester.RunAllTests()
-
-	time.Sleep(3 * time.Second)
+	if r.tester != nil {
+		time.Sleep(2 * time.Second)
+		r.tester.RunAllTests()
+		time.Sleep(2 * time.Second)
+	} else {
+		time.Sleep(time.Duration(r.duration) * time.Second)
+	}
 
 	if err := cmd.Process.Signal(syscall.SIGTERM); err != nil {
 		log.Fatalln("failed to kill process: ", err)
@@ -49,7 +56,9 @@ func (r *Recorder) startRecord() {
 }
 
 func (r *Recorder) rollback() {
-	r.tester.RunAllRollbacks()
+	if r.tester != nil {
+		r.tester.RunAllRollbacks()
+	}
 }
 
 func (r *Recorder) Record() {

@@ -21,8 +21,9 @@ type Tester struct {
 	limit        int
 }
 
-func NewTester(conf configuration.TracerConfigurations) *Tester {
+func NewTester(conf configuration.TracerConfigurations) (*Tester, int) {
 	t := new(Tester)
+	d := 0
 
 	profile := conf.Record.BreakingProfile
 
@@ -31,6 +32,7 @@ func NewTester(conf configuration.TracerConfigurations) *Tester {
 
 			t.ratio = p.Ratio
 			t.limit = p.Limit
+			d = p.Duration
 
 			i := 0
 			for _, s := range p.Sequence {
@@ -51,7 +53,12 @@ func NewTester(conf configuration.TracerConfigurations) *Tester {
 		}
 	}
 
-	return t
+	if len(t.functionList) == 0 {
+		return nil, d
+	} else {
+		return t, 0
+	}
+
 }
 
 func (t *Tester) RunAllTests() {

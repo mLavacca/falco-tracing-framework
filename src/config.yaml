@@ -13,6 +13,7 @@ offline_report:
       - "-e"
       - "/tmp/falco_tester.scap"
   output_file: /home/mattia/falco_metrics.json
+  output_folded_stacktrace: /home/mattia/falco_stacktrace.folded
   iterations: 5
 
 online_report:
@@ -50,10 +51,13 @@ rules_breakers:
   
 breaking_profiles:
   - name: flat
+    duration: 5
+
+  - name: linear
     sequence: [[6], [10], [11]]
     rollback_sequence: [10]
     ratio: 5
-    limit: 5
+    limit: 200
 
   - name: interleaved1
     sequence: [[0, 1]]

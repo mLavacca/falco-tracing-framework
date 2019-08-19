@@ -23,7 +23,9 @@ type OnlineFalcoMetrics struct {
 }
 
 type OfflineFalcoMetrics struct {
-	Metrics FalcoMetrics `json:"falco metrics"`
+	Metrics             FalcoMetrics        `json:"falco metrics"`
+	UnbrokenRuleMetrics map[string]RuleStat `json:"unbroken rules"`
+	BrokenRuleMetrics   map[string]RuleStat `json:"broken rules"`
 }
 
 type Stacktrace struct {
@@ -57,6 +59,8 @@ func NewOfflineFalcoMetrics() *OfflineFalcoMetrics {
 
 	m.Metrics.Stacktraces = make(map[string]Stacktrace)
 	m.Metrics.CounterStats = make(map[string]CounterStat)
+	m.UnbrokenRuleMetrics = make(map[string]RuleStat)
+	m.BrokenRuleMetrics = make(map[string]RuleStat)
 
 	return m
 }

@@ -8,16 +8,17 @@ import sys
 import plotly.express as px
 import pandas as pd
 
-save_dir = "/tmp/"
+save_dir = "/home/mattia/"
 
 
 def draw_plot(b):
-    with open(save_dir + "tracer_data.json") as json_file:
+    with open(save_dir + "falco_metrics.json") as json_file:
         data = json.load(json_file)
 
     rules = []
-    for k, v in data['rules']['falco rules'].items():
-        rules.append(v['Name'])
+    print(data)
+    for k, v in data['unbroken rules'].items():
+        rules.append(k)
 
     times = []
     for i in range(0, len(data['statistics']['falco statistics'])):

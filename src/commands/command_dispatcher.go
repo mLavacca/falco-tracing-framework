@@ -13,6 +13,5 @@ func DispatchCommand(cmd string, conf configuration.TracerConfigurations) {
 	case "online-report":
 		reporter := newOnlineReporter(conf.OnlineReport)
 		reporter.report()
-	case "rule-report":
 	}
 }

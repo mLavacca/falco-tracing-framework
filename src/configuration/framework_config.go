@@ -21,9 +21,10 @@ type RecordConfiguration struct {
 }
 
 type OfflineReportConfiguration struct {
-	ProgConfig ProgConfiguration `yaml:"prog_config,omitempty"`
-	OutputFile string            `yaml:"output_file,omitempty"`
-	Iterations int               `yaml:"iterations,omitempty"`
+	ProgConfig             ProgConfiguration `yaml:"prog_config,omitempty"`
+	OutputFile             string            `yaml:"output_file,omitempty"`
+	OutputFoldedStacktrace string            `yaml:"output_folded_stacktrace,omitempty"`
+	Iterations             int               `yaml:"iterations,omitempty"`
 }
 
 type OnlineReportConfiguration struct {
@@ -48,6 +49,7 @@ type BreakingProfileConfiguration struct {
 	RollbackSequence []int   `yaml:"rollback_sequence,omitempty"`
 	Ratio            int     `yaml:"ratio,omitempty"`
 	Limit            int     `yaml:"limit,omitempty"`
+	Duration         int     `yaml:"duration,omitempty"`
 }
 
 func (tc *TracerConfigurations) UnmarshalYAML(configFile string) error {

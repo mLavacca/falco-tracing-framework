@@ -27,3 +27,15 @@ func (m *OfflineMetrics) AddCounterStat(n string, cs CounterStat) {
 
 	fs.addCounterStat(n, cs)
 }
+
+func (m *OfflineMetrics) AddUnbrokenRuleMetric(name string, r RuleStat) {
+	fs := m.Fm[len(m.Fm)-1]
+
+	fs.UnbrokenRuleMetrics[name] = r
+}
+
+func (m *OfflineMetrics) AddBrokenRuleMetric(name string, r RuleStat) {
+	fs := m.Fm[len(m.Fm)-1]
+
+	fs.BrokenRuleMetrics[name] = r
+}

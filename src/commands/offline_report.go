@@ -5,6 +5,8 @@ import (
 	"log"
 	"os/exec"
 	"stats_getter"
+
+	df "data_formatter"
 )
 
 type offlineReporter struct {
@@ -19,6 +21,8 @@ func newOfflineReporter(conf configuration.OfflineReportConfiguration) *offlineR
 	r.reporter.falcoBin = conf.ProgConfig.ProgBin
 	r.reporter.falcoargs = conf.ProgConfig.ProgArgs
 	r.reporter.outputFile = conf.OutputFile
+	r.reporter.outputFoldedFile = conf.OutputFoldedStacktrace
+
 	r.reporter.mode = "offline"
 
 	r.iterations = conf.Iterations
@@ -47,12 +51,14 @@ func (r *offlineReporter) startReport() {
 
 		stats_getter.OpenFalcoGateway(r.reporter.falcoTracer)
 
+		r.reporter.falcoTracer.LoadOfflineRulesFromFalco()
+
+		stats_getter.OpenFalcoGateway(r.reporter.falcoTracer)
+
 		r.getOfflineStats()
 
 		stats_getter.CloseFalcoGateway(r.reporter.falcoTracer)
 	}
-
-	r.reporter.falcoTracer.LoadOfflineRulesFromFalco()
 
 	metr := r.reporter.falcoTracer.OfflineAvg()
 
@@ -61,7 +67,10 @@ func (r *offlineReporter) startReport() {
 		log.Fatal("error in object marshaling")
 	}
 
+	foldedStacktraces := df.CreateFoldedStacktrace(metr.Metrics.Stacktraces)
+
 	writeMetricsOnFile(jsonStats, r.reporter.outputFile)
+	writeMetricsOnFile([]byte(foldedStacktraces), r.reporter.outputFoldedFile)
 }
 
 func (r *offlineReporter) getOfflineStats() {

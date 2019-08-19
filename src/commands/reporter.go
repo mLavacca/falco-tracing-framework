@@ -11,20 +11,21 @@ type reporterData struct {
 	falcoBin  string
 	falcoargs []string
 
-	outputFile string
-	mode       string
+	outputFile       string
+	outputFoldedFile string
+	mode             string
 
 	falcoTracer *stats_getter.FalcoTracer
 }
 
-func writeMetricsOnFile(jsonStats []byte, outPath string) {
+func writeMetricsOnFile(data []byte, outPath string) {
 
 	f, err := os.Create(outPath)
 	if err != nil {
 		log.Fatalln("Error in file creation", outPath, err)
 	}
 
-	l, err := f.Write(jsonStats)
+	l, err := f.Write(data)
 	if err != nil {
 		log.Fatalln("Error in json write", err)
 	}

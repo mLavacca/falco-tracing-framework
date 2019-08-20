@@ -13,6 +13,7 @@ type reporterData struct {
 
 	outputFile       string
 	outputFoldedFile string
+	outputDottedFile string
 	mode             string
 
 	falcoTracer *stats_getter.FalcoTracer

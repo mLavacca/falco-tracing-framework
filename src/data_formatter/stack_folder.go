@@ -10,9 +10,10 @@ type folderStack struct {
 	funcs string
 }
 
-func CreateFoldedStacktrace(s map[string]m.Stacktrace) string {
+func CreateFoldedStacktrace(s map[string]m.Stacktrace) []byte {
 
 	var fs []folderStack
+	var folded string
 
 	for _, stv := range s {
 		var rootFunction string
@@ -40,13 +41,11 @@ func CreateFoldedStacktrace(s map[string]m.Stacktrace) string {
 		}
 	}
 
-	folded := ""
-
 	for _, f := range fs {
 		folded = folded + f.funcs + " " + strconv.FormatUint(f.n, 10) + "\n"
 	}
 
-	return folded
+	return []byte(folded)
 }
 
 func recursiveFolding(stv m.Stacktrace, rootFunction string, tmpFuncs string, funcsSlice *[]string) bool {

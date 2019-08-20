@@ -22,6 +22,7 @@ func newOfflineReporter(conf configuration.OfflineReportConfiguration) *offlineR
 	r.reporter.falcoargs = conf.ProgConfig.ProgArgs
 	r.reporter.outputFile = conf.OutputFile
 	r.reporter.outputFoldedFile = conf.OutputFoldedStacktrace
+	r.reporter.outputDottedFile = conf.OutputDottedStacktrace
 
 	r.reporter.mode = "offline"
 
@@ -68,9 +69,11 @@ func (r *offlineReporter) startReport() {
 	}
 
 	foldedStacktraces := df.CreateFoldedStacktrace(metr.Metrics.Stacktraces)
+	dottedStackTrace := df.CreateDotStacktrace(metr.Metrics.Stacktraces)
 
+	writeMetricsOnFile(dottedStackTrace, r.reporter.outputDottedFile)
 	writeMetricsOnFile(jsonStats, r.reporter.outputFile)
-	writeMetricsOnFile([]byte(foldedStacktraces), r.reporter.outputFoldedFile)
+	writeMetricsOnFile(foldedStacktraces, r.reporter.outputFoldedFile)
 }
 
 func (r *offlineReporter) getOfflineStats() {

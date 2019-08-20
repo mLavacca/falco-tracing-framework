@@ -24,6 +24,7 @@ type OfflineReportConfiguration struct {
 	ProgConfig             ProgConfiguration `yaml:"prog_config,omitempty"`
 	OutputFile             string            `yaml:"output_file,omitempty"`
 	OutputFoldedStacktrace string            `yaml:"output_folded_stacktrace,omitempty"`
+	OutputDottedStacktrace string            `yaml:"output_dotted_stacktrace,omitempty"`
 	Iterations             int               `yaml:"iterations,omitempty"`
 }
 

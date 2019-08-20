@@ -18,7 +18,7 @@ type offlineReporter struct {
 func newOfflineReporter(conf configuration.OfflineReportConfiguration) *offlineReporter {
 	r := new(offlineReporter)
 
-	r.reporter.falcoBin = conf.ProgConfig.ProgBin
+	r.reporter.falcoBins = conf.ProgConfig.ProgBins
 	r.reporter.falcoargs = conf.ProgConfig.ProgArgs
 	r.reporter.outputFile = conf.OutputFile
 	r.reporter.outputFoldedFile = conf.OutputFoldedStacktrace
@@ -37,28 +37,29 @@ func (or *offlineReporter) report() {
 
 func (r *offlineReporter) startReport() {
 
-	bin := r.reporter.falcoBin
-	args := r.reporter.falcoargs
-
 	r.reporter.falcoTracer = stats_getter.NewFalcoTracer(r.reporter.mode)
 
-	for i := 0; i < r.iterations; i++ {
-		cmd := exec.Command(bin, args...)
+	for _, bin := range r.reporter.falcoBins {
+		args := r.reporter.falcoargs
 
-		err := cmd.Run()
-		if err != nil {
-			log.Fatalln("cmd.Run() failed with ", err)
+		for i := 0; i < r.iterations; i++ {
+			cmd := exec.Command(bin, args...)
+
+			err := cmd.Run()
+			if err != nil {
+				log.Fatalln("cmd.Run() failed with ", err)
+			}
+
+			stats_getter.OpenFalcoGateway(r.reporter.falcoTracer)
+
+			r.reporter.falcoTracer.LoadOfflineRulesFromFalco()
+
+			stats_getter.OpenFalcoGateway(r.reporter.falcoTracer)
+
+			r.getOfflineStats()
+
+			stats_getter.CloseFalcoGateway(r.reporter.falcoTracer)
 		}
-
-		stats_getter.OpenFalcoGateway(r.reporter.falcoTracer)
-
-		r.reporter.falcoTracer.LoadOfflineRulesFromFalco()
-
-		stats_getter.OpenFalcoGateway(r.reporter.falcoTracer)
-
-		r.getOfflineStats()
-
-		stats_getter.CloseFalcoGateway(r.reporter.falcoTracer)
 	}
 
 	metr := r.reporter.falcoTracer.OfflineAvg()
@@ -74,6 +75,7 @@ func (r *offlineReporter) startReport() {
 	writeMetricsOnFile(dottedStackTrace, r.reporter.outputDottedFile)
 	writeMetricsOnFile(jsonStats, r.reporter.outputFile)
 	writeMetricsOnFile(foldedStacktraces, r.reporter.outputFoldedFile)
+
 }
 
 func (r *offlineReporter) getOfflineStats() {

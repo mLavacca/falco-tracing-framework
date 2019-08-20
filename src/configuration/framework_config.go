@@ -35,7 +35,7 @@ type OnlineReportConfiguration struct {
 }
 
 type ProgConfiguration struct {
-	ProgBin  string   `yaml:"prog_bin,omitempty"`
+	ProgBins []string `yaml:"prog_bins,omitempty"`
 	ProgArgs []string `yaml:"prog_args,omitempty"`
 }
 

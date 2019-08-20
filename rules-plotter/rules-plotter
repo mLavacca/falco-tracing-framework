@@ -1,5 +1,6 @@
 #!/usr/bin/python3.7
 
+import argparse
 import json
 import plotly.graph_objects as go
 from plotly.subplots import make_subplots
@@ -8,16 +9,40 @@ import sys
 import plotly.express as px
 import pandas as pd
 
-save_dir = "/home/mattia/"
+mode = ""
+output_dir = ""
+input_file = ""
 
+def args_parsing():
+    global mode, output_dir, input_file
+
+    parser = argparse.ArgumentParser(
+        description="Falco rules plotter tool",
+        formatter_class=argparse.RawDescriptionHelpFormatter
+    )
+    parser.add_argument("-m", "--mode", help="working mode (offline/online)",
+                        default="offline")
+    parser.add_argument("-i", "--input_file", help ="input json file")
+    parser.add_argument("-o", "--output_directory", help="Path of the images",
+                        default="./out.png")
+    args = parser.parse_args()
+
+    if args.output_directory:
+        output_dir = args.output_directory
+    if args.input_file:
+        input_file = args.input_file
+
+    mode = args.mode
 
 def draw_plot(b):
-    with open(save_dir + "falco_metrics.json") as json_file:
+    global output_dir
+
+    with open("falco_metrics.json") as json_file:
         data = json.load(json_file)
 
     rules = []
     print(data)
-    for k, v in data['unbroken rules'].items():
+    for k, _ in data['unbroken rules'].items():
         rules.append(k)
 
     times = []
@@ -90,77 +115,70 @@ def draw_plot(b):
     json_file.close()
 
 
+# offline histograms drawer
 def draw_avg_hist():
-    with open(save_dir + "tracer_data.json") as json_file:
+    global input_file, output_dir
+
+    with open(input_file) as json_file:
         data = json.load(json_file)
     
-    data_array = data['statistics']['avg unbroken rules stats']
-    data_to_show = []
+    
 
-    for el in data_array:
-        data_to_show.append({'name': el['name'], 'id': el['values']['tag id'], 'counter': el['values']['counter'],
-                             'latency': el['values']['latency'],
-                             'overhead': el['values']['counter']*el['values']['latency']})
+    for type in ["unbroken rules", "broken rules"]:
+        data_array = data[type]
+        data_to_show = []
+        for k, v in data_array.items():
+            data_to_show.append({'name': k, 'id': v['tag id'], 'counter': v['counter'], 
+                'latency': v['latency'],
+                'overhead': v['counter']*v['latency']})
 
-    data_to_show_frame = pd.DataFrame(data_to_show)
+        data_to_show_frame = pd.DataFrame(data_to_show)
 
-    fig = px.bar(data_to_show_frame, x='name', y='counter')
-    fig.update_layout(
-        autosize=False,
-        height=800,
-        width=1800,
-        xaxis=go.layout.XAxis(
-            title_text="",
-        ))
-    fig.update_xaxes(automargin=True)
+        fig1 = px.bar(data_to_show_frame, x='name', y='counter', )
+        fig1.update_layout(
+            autosize=False,
+            height=800,
+            width=1800,
+            xaxis=go.layout.XAxis(
+                title_text="",
+            ))
+        fig1.update_xaxes(automargin=True)
 
-    fig2 = px.bar(data_to_show_frame, x='name', y='latency')
-    fig2.update_layout(
-        autosize=False,
-        height=800,
-        width=1800,
-        xaxis=go.layout.XAxis(
-            title_text="",
-        ))
-    fig2.update_xaxes(automargin=True)
+        fig2 = px.bar(data_to_show_frame, x='name', y='latency')
+        fig2.update_layout(
+            autosize=False,
+            height=800,
+            width=1800,
+            xaxis=go.layout.XAxis(
+                title_text="",
+            ))
+        fig2.update_xaxes(automargin=True)
 
-    fig3 = px.bar(data_to_show_frame, x='name', y='overhead')
-    fig3.update_layout(
-        autosize=False,
-        height=800,
-        width=1800,
-        xaxis=go.layout.XAxis(
-            title_text="",
-        ))
-    fig3.update_xaxes(automargin=True)
+        fig3 = px.bar(data_to_show_frame, x='name', y='overhead')
+        fig3.update_layout(
+            autosize=False,
+            height=800,
+            width=1800,
+            xaxis=go.layout.XAxis(
+                title_text="",
+            ))
+        fig3.update_xaxes(automargin=True)
 
-    fig.show()
-    fig2.show()
-    fig3.show()
+        fig1.write_image(output_dir + "/falco_" + type +"_counter.png")
+        fig2.write_image(output_dir + "/falco_" + type +"_latency.png")
+        fig3.write_image(output_dir + "/falco_" + type +"_overhead.png")
 
     json_file.close()
 
 
 def main():
-    if len(sys.argv) != 2:
-        print("Arguments error")
-        exit()
+    global mode, input_file, output_dir
 
-    broken = sys.argv[1]
+    args_parsing()
 
-    if broken == "a":
+    if mode == "offline":
         draw_avg_hist()
         return
-
-    if broken == "b":
-        broken = "broken rules"
-    elif broken == "u":
-        broken = "unbroken rules"
-    else:
-        print("invalid argument")
-        exit()
-
-    draw_plot(broken)
 
 
 if __name__ == "__main__":

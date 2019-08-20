@@ -241,16 +241,19 @@ func getTimesFromMessage(line string) (uint64, uint64) {
 }
 
 func (f *FalcoTracer) OfflineAvg() m.OfflineFalcoMetrics {
+
 	var metr m.FalcoMetrics = f.offlineMetrics.Fm[0].Metrics
 	var avgUnbroken = f.offlineMetrics.Fm[0].UnbrokenRuleMetrics
 	var avgBroken = f.offlineMetrics.Fm[0].BrokenRuleMetrics
+	var p uint64
 
 	// stacktrace avg computation
-	for i, om := range f.offlineMetrics.Fm[1:] {
+	p = 0
+	for _, om := range f.offlineMetrics.Fm[1:] {
 		sts1 := metr.Stacktraces
 		sts2 := om.Metrics.Stacktraces
 
-		var j uint64 = uint64(i) + 1
+		var j uint64 = p + 1
 
 		stacktraceMap := make(map[string]m.Stacktrace)
 		for k, v := range sts2 {
@@ -272,15 +275,20 @@ func (f *FalcoTracer) OfflineAvg() m.OfflineFalcoMetrics {
 			stacktraceMap[k] = st
 		}
 
-		metr.Stacktraces = stacktraceMap
+		if len(sts2) > 0 {
+			p++
+			metr.Stacktraces = stacktraceMap
+		}
+
 	}
 
 	// counter avg computation
-	for i, om := range f.offlineMetrics.Fm[1:] {
+	p = 0
+	for _, om := range f.offlineMetrics.Fm[1:] {
 		cts1 := metr.CounterStats
 		cts2 := om.Metrics.CounterStats
 
-		var j uint64 = uint64(i) + 1
+		var j uint64 = p + 1
 
 		counterMap := make(map[string]m.CounterStat)
 		for k, v := range cts2 {
@@ -289,15 +297,21 @@ func (f *FalcoTracer) OfflineAvg() m.OfflineFalcoMetrics {
 			c.Counter = (v.Counter + (cts1[k].Counter * j)) / (j + 1)
 			counterMap[k] = c
 		}
-		metr.CounterStats = counterMap
+
+		if len(cts2) > 0 {
+			p++
+			metr.CounterStats = counterMap
+		}
+
 	}
 
 	// unbroken rules avg computation
-	for i, om := range f.offlineMetrics.Fm[1:] {
+	p = 0
+	for _, om := range f.offlineMetrics.Fm[1:] {
 		urm1 := avgUnbroken
 		urm2 := om.UnbrokenRuleMetrics
 
-		var j uint64 = uint64(i) + 1
+		var j uint64 = p + 1
 
 		ruleMap := make(map[string]m.RuleStat)
 		for k, v := range urm2 {
@@ -309,15 +323,21 @@ func (f *FalcoTracer) OfflineAvg() m.OfflineFalcoMetrics {
 			r.Latency = (v.Latency + (urm1[k].Latency * j)) / (j + 1)
 			ruleMap[k] = r
 		}
-		avgUnbroken = ruleMap
+
+		if len(urm2) > 0 {
+			p++
+			avgUnbroken = ruleMap
+		}
+
 	}
 
 	// broken rules avg computation
-	for i, om := range f.offlineMetrics.Fm[1:] {
+	p = 0
+	for _, om := range f.offlineMetrics.Fm[1:] {
 		brm1 := avgBroken
 		brm2 := om.BrokenRuleMetrics
 
-		var j uint64 = uint64(i) + 1
+		var j uint64 = p + 1
 
 		ruleMap := make(map[string]m.RuleStat)
 		for k, v := range brm2 {
@@ -330,7 +350,12 @@ func (f *FalcoTracer) OfflineAvg() m.OfflineFalcoMetrics {
 
 			ruleMap[k] = r
 		}
-		avgBroken = ruleMap
+
+		if len(brm2) > 0 {
+			p++
+			avgBroken = ruleMap
+		}
+
 	}
 
 	return m.OfflineFalcoMetrics{

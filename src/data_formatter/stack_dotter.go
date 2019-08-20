@@ -48,7 +48,6 @@ func CreateDotStacktrace(s map[string]m.Stacktrace) []byte {
 				subgraphRoot = kf
 			}
 		}
-		dot = dot + "\t\tlabel = \"" + ks + "\";\n"
 		dot = dot + "\t}\n"
 		i++
 	}
@@ -56,6 +55,7 @@ func CreateDotStacktrace(s map[string]m.Stacktrace) []byte {
 	for j := 0; j < i; j++ {
 		dot += "\troot -> " + subgraphRoot + strconv.Itoa(j) + ";\n"
 	}
+
 	dot += "\n"
 	dot += "\troot[shape=Mdiamond];\n"
 

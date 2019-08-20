@@ -8,7 +8,7 @@ import (
 )
 
 type reporterData struct {
-	falcoBin  string
+	falcoBins []string
 	falcoargs []string
 
 	outputFile       string
@@ -31,7 +31,7 @@ func writeMetricsOnFile(data []byte, outPath string) {
 		log.Fatalln("Error in json write", err)
 	}
 
-	fmt.Println("json output: ", l, "bytes written successfully")
+	fmt.Println("File writer: ", l, "bytes written successfully on ", outPath)
 	err = f.Close()
 	if err != nil {
 		fmt.Println(err)

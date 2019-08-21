@@ -15,9 +15,11 @@ offline_report:
     prog_args:
       - "-e"
       - "/tmp/falco_tester.scap"
-  output_file: /home/mattia/tracing_env/results/1/falco_metrics.json
-  output_folded_stacktrace: /home/mattia/tracing_env/results/1/falco_stacktrace.folded
-  output_dotted_stacktrace: /home/mattia/tracing_env/results/1/falco_stacktrace.dot
+  output_directory: /home/mattia/tracing_env/results/1
+  output_formats:
+    - json
+    - dot
+    - folded
   iterations: 5
 
 online_report:
@@ -25,7 +27,8 @@ online_report:
     prog_bins:
       - /home/mattia/tracing_env/bin/falco_stacktrace
     prog_args: 
-  output_file: /home/mattia/tracing_env/results/falco_metrics.json
+  output_directory: /home/mattia/tracing_env/results/1
+  output_formats:
   pull_interval: 1
 
 rules_breakers:

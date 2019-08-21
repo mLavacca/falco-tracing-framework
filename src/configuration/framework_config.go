@@ -21,17 +21,17 @@ type RecordConfiguration struct {
 }
 
 type OfflineReportConfiguration struct {
-	ProgConfig             ProgConfiguration `yaml:"prog_config,omitempty"`
-	OutputFile             string            `yaml:"output_file,omitempty"`
-	OutputFoldedStacktrace string            `yaml:"output_folded_stacktrace,omitempty"`
-	OutputDottedStacktrace string            `yaml:"output_dotted_stacktrace,omitempty"`
-	Iterations             int               `yaml:"iterations,omitempty"`
+	ProgConfig      ProgConfiguration `yaml:"prog_config,omitempty"`
+	OutputDirectory string            `yaml:"output_directory,omitempty"`
+	OutputFormats   []string          `yaml:"output_formats,omitempty"`
+	Iterations      int               `yaml:"iterations,omitempty"`
 }
 
 type OnlineReportConfiguration struct {
-	ProgConfig   ProgConfiguration `yaml:"prog_config,omitempty"`
-	OutputFile   string            `yaml:"output_file,omitempty"`
-	PullInterval time.Duration     `yaml:"pull_interval,omitempty"`
+	ProgConfig      ProgConfiguration `yaml:"prog_config,omitempty"`
+	OutputDirectory string            `yaml:"output_directory,omitempty"`
+	OutputFormats   []string          `yaml:"output_formats,omitempty"`
+	PullInterval    time.Duration     `yaml:"pull_interval,omitempty"`
 }
 
 type ProgConfiguration struct {

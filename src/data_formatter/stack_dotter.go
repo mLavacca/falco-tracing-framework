@@ -24,7 +24,7 @@ func CreateDotStacktrace(s map[string]m.Stacktrace) []byte {
 			dot = dot + "\t\tnode [style=filled,color=lightblue];\n"
 		}
 
-		dot = dot + "\t\t" + ks + " [label=\"" + strings.ToUpper(ks) + " | counter: " +
+		dot = dot + "\t\t" + ks + " [label=\"" + strings.ToUpper(ks) + " - counter: " +
 			strconv.FormatUint(vs.Counter, 10) + "\"," +
 			" fontname=\"times-bold\",style=filled,color=white];\n"
 
@@ -35,7 +35,7 @@ func CreateDotStacktrace(s map[string]m.Stacktrace) []byte {
 
 			dot = dot + "\t\t" +
 				called + strconv.Itoa(i) + " [label=\"" +
-				called + " | " + strconv.FormatUint(vf.Latency, 10) + "\"];\n"
+				called + " - latency: " + strconv.FormatUint(vf.Latency, 10) + "\"];\n"
 
 			if vf.Caller != "root" {
 				dot = dot + "\t\t" +

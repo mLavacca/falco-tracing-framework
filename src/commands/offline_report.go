@@ -4,6 +4,7 @@ import (
 	"configuration"
 	"log"
 	"os/exec"
+	"path"
 	"stats_getter"
 
 	df "data_formatter"
@@ -20,9 +21,8 @@ func newOfflineReporter(conf configuration.OfflineReportConfiguration) *offlineR
 
 	r.reporter.falcoBins = conf.ProgConfig.ProgBins
 	r.reporter.falcoargs = conf.ProgConfig.ProgArgs
-	r.reporter.outputFile = conf.OutputFile
-	r.reporter.outputFoldedFile = conf.OutputFoldedStacktrace
-	r.reporter.outputDottedFile = conf.OutputDottedStacktrace
+	r.reporter.outputDirectory = conf.OutputDirectory
+	r.reporter.outputFormats = conf.OutputFormats
 
 	r.reporter.mode = "offline"
 
@@ -69,13 +69,24 @@ func (r *offlineReporter) startReport() {
 		log.Fatal("error in object marshaling")
 	}
 
-	foldedStacktraces := df.CreateFoldedStacktrace(metr.Metrics.Stacktraces)
-	dottedStackTrace := df.CreateDotStacktrace(metr.Metrics.Stacktraces)
+	for _, f := range r.reporter.outputFormats {
+		switch f {
 
-	writeMetricsOnFile(dottedStackTrace, r.reporter.outputDottedFile)
-	writeMetricsOnFile(jsonStats, r.reporter.outputFile)
-	writeMetricsOnFile(foldedStacktraces, r.reporter.outputFoldedFile)
+		case jsonFormat:
+			outPath := path.Join(r.reporter.outputDirectory, "/", jsonFile)
+			writeMetricsOnFile(jsonStats, outPath)
 
+		case dotFormat:
+			dottedStackTrace := df.CreateDotStacktrace(metr.Metrics.Stacktraces)
+			outPath := path.Join(r.reporter.outputDirectory, "/", dotFile)
+			writeMetricsOnFile(dottedStackTrace, outPath)
+
+		case foldedFormat:
+			foldedStacktraces := df.CreateFoldedStacktrace(metr.Metrics.Stacktraces)
+			outPath := path.Join(r.reporter.outputDirectory, "/", foldedFile)
+			writeMetricsOnFile(foldedStacktraces, outPath)
+		}
+	}
 }
 
 func (r *offlineReporter) getOfflineStats() {

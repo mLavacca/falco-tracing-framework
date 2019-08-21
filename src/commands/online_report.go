@@ -20,7 +20,8 @@ func newOnlineReporter(conf configuration.OnlineReportConfiguration) *onlineRepo
 
 	r.reporter.falcoBins = conf.ProgConfig.ProgBins
 	r.reporter.falcoargs = conf.ProgConfig.ProgArgs
-	r.reporter.outputFile = conf.OutputFile
+	r.reporter.outputDirectory = conf.OutputDirectory
+	r.reporter.outputFormats = conf.OutputFormats
 	r.reporter.mode = "online"
 
 	r.pullInterval = conf.PullInterval

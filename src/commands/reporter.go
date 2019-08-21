@@ -7,14 +7,23 @@ import (
 	"stats_getter"
 )
 
+const (
+	jsonFormat   = "json"
+	dotFormat    = "dot"
+	foldedFormat = "folded"
+
+	jsonFile   = "falco_metrics.json"
+	dotFile    = "falco_stacktrace.dot"
+	foldedFile = "falco_stacktrace.folded"
+)
+
 type reporterData struct {
 	falcoBins []string
 	falcoargs []string
 
-	outputFile       string
-	outputFoldedFile string
-	outputDottedFile string
-	mode             string
+	outputDirectory string
+	outputFormats   []string
+	mode            string
 
 	falcoTracer *stats_getter.FalcoTracer
 }

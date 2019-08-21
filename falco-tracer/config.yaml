@@ -1,0 +1,80 @@
+record:
+  prog_config: 
+    prog_bins:
+      - /home/mattia/tracing_env/bin/sysdig
+    prog_args:
+      - "-w"
+      - "/tmp/falco_tester.scap"
+  breaking_profile: linear
+    
+offline_report:
+  prog_config: 
+    prog_bins: 
+      - /home/mattia/tracing_env/bin/falco_stacktrace
+      - /home/mattia/tracing_env/bin/falco_rules
+    prog_args:
+      - "-e"
+      - "/tmp/falco_tester.scap"
+  output_directory: /home/mattia/tracing_env/results/1
+  output_formats:
+    - json
+    - dot
+    - folded
+  iterations: 5
+
+online_report:
+  prog_config: 
+    prog_bins:
+      - /home/mattia/tracing_env/bin/falco_stacktrace
+    prog_args: 
+  output_directory: /home/mattia/tracing_env/results/1
+  output_formats:
+  pull_interval: 1
+
+rules_breakers:
+  - rule: Disallowed SSH connection
+    rule_id: 0
+  - rule: Unexpected outbound connection destination
+    rule_id: 1
+  - rule: Unexpected inbound connection source
+    rule_id: 2
+  - rule: Modify Shell configuration file
+    rule_id: 3
+  - rule: Read Shell Configuration File
+    rule_id: 4
+  - rule: Schedule Cron Jobs
+    rule_id: 5
+  - rule: Update Package Repository
+    rule_id: 6
+  - rule: Write below binary dir
+    rule_id: 7
+  - rule: Write below monitored dir
+    rule_id: 8
+  - rule: Read ssh information
+    rule_id: 9
+  - rule: Write below etc
+    rule_id: 10
+  - rule: Error file below / or /root opened for writing
+    rule_id: 11
+  
+breaking_profiles:
+  - name: flat
+    duration: 5
+
+  - name: linear
+    sequence: [[6], [10], [11]]
+    rollback_sequence: [10]
+    ratio: 5
+    limit: 200
+
+  - name: interleaved1
+    sequence: [[0, 1]]
+    rollback_sequence: [0, 1]
+    ratio: 1
+    limit: 1000
+
+  - name: interleaved2
+    sequence: [[0,1,0], [1,0,1]]
+    rollback_sequence: [0, 1]
+    ratio: 10
+    limit: 10 

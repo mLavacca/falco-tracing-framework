@@ -127,6 +127,10 @@ def draw_avg_hist():
     for type in ["unbroken rules", "broken rules"]:
         data_array = data[type]
         data_to_show = []
+        
+        if len(data_array) == 0:
+            continue
+
         for k, v in data_array.items():
             data_to_show.append({'name': k, 'id': v['tag id'], 'counter': v['counter'], 
                 'latency': v['latency'],

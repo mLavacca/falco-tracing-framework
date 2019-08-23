@@ -16,7 +16,7 @@
 /*
  * monitored functions
  */
-#define N_MONITORED_FUNCTIONS 8
+#define N_MONITORED_FUNCTIONS 9
 
 #define ANALYSIS_CYCLE 0
 #define SINSP_NEXT 1
@@ -26,6 +26,7 @@
 #define PROCESS_SINSP_EVENT 5
 #define FALCO_ENGINE_SHOULD_DROP_EVT 6
 #define RULESET_FILTERS_RUN 7
+#define FALCO_OUTPUTS_HANDLE_EVENT 8
 
 #define ROOT -1
 

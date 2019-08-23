@@ -43,7 +43,8 @@ typedef struct rule_stats{
         "sinsp_evt::falco_consider",
         "falco_engine::process_sinsp_event",
         "falco_engine::should_drop_evt",
-        "falco_sinsp_ruleset::run"
+        "falco_sinsp_ruleset::run",
+        "falco_outputs::handle_event"
     };
 
     const char* counter_names[N_MONITORED_COUNTERS] = {

@@ -33,9 +33,15 @@ func CreateDotStacktrace(s map[string]m.Stacktrace) []byte {
 			caller := replacer.Replace(vf.Caller)
 			called := replacer.Replace(kf)
 
-			dot = dot + "\t\t" +
-				called + strconv.Itoa(i) + " [label=\"" +
-				called + " - latency: " + strconv.FormatUint(vf.Latency, 10) + "\"];\n"
+			if caller != "root" {
+				dot = dot + "\t\t" +
+					called + strconv.Itoa(i) + " [label=\"" +
+					called + " - latency: " + strconv.FormatUint(vf.Latency, 10) + "\"];\n"
+			} else {
+				dot = dot + "\t\t" +
+					called + strconv.Itoa(i) + " [label=\"" +
+					called + "\"];\n"
+			}
 
 			if vf.Caller != "root" {
 				dot = dot + "\t\t" +

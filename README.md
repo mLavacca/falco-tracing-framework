@@ -28,7 +28,7 @@ In order to have a meaningful graphical representation of the system, Falco-trac
 -   `.folded`  file ([flamegraph](https://github.com/brendangregg/FlameGraph)) representing a flamegraph of Falco.
 
 ## The architecture
-![architecture](https://github.com/mLavacca/falco-tracing-framework/blob/assets/tracing_architecture.png)
+![architecture](https://github.com/mLavacca/falco-tracing-framework/blob/media/tracing_architecture.png)
 
 ## Build
 1. Download [Falco](https://github.com/mLavacca/falco/tree/tracing) and [sysdig](https://github.com/mLavacca/sysdig/tree/tracing) tracing branches in this main directory

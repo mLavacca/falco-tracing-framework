@@ -1,3 +1,4 @@
+
 # Falco tracing framework
 
 ## Abstract
@@ -29,7 +30,12 @@ In order to have a meaningful graphical representation of the system, Falco-trac
 ## The architecture
 ![architecture](https://github.com/mLavacca/falco-tracing-framework/blob/assets/tracing_architecture.png)
 
-## Install
+## Build
+1. Download [Falco](https://github.com/mLavacca/falco/tree/tracing) and [sysdig](https://github.com/mLavacca/sysdig/tree/tracing) tracing branches in this main directory
+2. Build [Falco](https://falco.org/docs/installation) with the cmake flag `-DFALCO_TRACE_FLAG="stacktrace"` if you want to profile stack traces or `-DFALCO_TRACE_FLAG="stacktrace"rules"` if you want to profile rules metrics.
+3. Build falco-tracer:
+	* `cd falco-tracer`
+	* `./compile.sh`
 
 
 ## GSOC project

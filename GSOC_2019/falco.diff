@@ -1,0 +1,450 @@
+[1mdiff --git a/CMakeLists.txt b/CMakeLists.txt[m
+[1mindex f2bb7b7..b65ad36 100644[m
+[1m--- a/CMakeLists.txt[m
+[1m+++ b/CMakeLists.txt[m
+[36m@@ -47,6 +47,13 @@[m [mendif()[m
+ [m
+ set(CMAKE_COMMON_FLAGS "-Wall -ggdb ${DRAIOS_FEATURE_FLAGS}")[m
+ [m
+[32m+[m[32m# Falco tracing[m
+[32m+[m[32mif(FALCO_TRACE_FLAG STREQUAL "stacktrace")[m
+[32m+[m	[32madd_definitions(-DTRACE_FALCO)[m
+[32m+[m[32melseif(FALCO_TRACE_FLAG STREQUAL "rules")[m
+[32m+[m	[32madd_definitions(-DTRACE_FALCO_RULES)[m
+[32m+[m[32mendif()[m
+[32m+[m
+ if(BUILD_WARNINGS_AS_ERRORS)[m
+ 	set(CMAKE_SUPPRESSED_WARNINGS "-Wno-unused-parameter -Wno-unused-variable -Wno-unused-but-set-variable -Wno-missing-field-initializers -Wno-sign-compare -Wno-type-limits -Wno-implicit-fallthrough -Wno-format-truncation")[m
+ 	set(CMAKE_COMMON_FLAGS "${CMAKE_COMMON_FLAGS} -Wextra -Werror ${CMAKE_SUPPRESSED_WARNINGS}")[m
+[1mdiff --git a/userspace/engine/CMakeLists.txt b/userspace/engine/CMakeLists.txt[m
+[1mindex 99d2ebe..5c33dda 100644[m
+[1m--- a/userspace/engine/CMakeLists.txt[m
+[1m+++ b/userspace/engine/CMakeLists.txt[m
+[36m@@ -26,7 +26,12 @@[m [mset(FALCO_ENGINE_SOURCE_FILES[m
+ 	json_evt.cpp[m
+ 	ruleset.cpp[m
+ 	token_bucket.cpp[m
+[31m-	formats.cpp)[m
+[32m+[m	[32mformats.cpp[m
+[32m+[m	[32m../../../falco-plugin/tracer_interface.cpp[m
+[32m+[m	[32m../../../falco-plugin/tracer.cpp[m[41m	[m
+[32m+[m	[32m../../../falco-plugin/tracer_common.cpp[m
+[32m+[m	[32m../../../falco-plugin/tracer_msg_creator.cpp[m
+[32m+[m	[32m../../../falco-plugin/tsc.cpp)[m
+ [m
+ add_library(falco_engine STATIC ${FALCO_ENGINE_SOURCE_FILES})[m
+ [m
+[36m@@ -39,6 +44,7 @@[m [mtarget_include_directories(falco_engine PUBLIC[m
+ 	"${SYSDIG_DIR}/userspace/libscap"[m
+ 	"${SYSDIG_DIR}/userspace/libsinsp"[m
+ 	"${PROJECT_BINARY_DIR}/userspace/engine"[m
+[32m+[m	[32m"${PROJECT_SOURCE_DIR}/../falco-plugin"[m
+ 	)[m
+ [m
+ target_link_libraries(falco_engine[m
+[1mdiff --git a/userspace/engine/falco_engine.cpp b/userspace/engine/falco_engine.cpp[m
+[1mindex e3e8327..67dda62 100644[m
+[1m--- a/userspace/engine/falco_engine.cpp[m
+[1m+++ b/userspace/engine/falco_engine.cpp[m
+[36m@@ -35,6 +35,10 @@[m [mextern "C" {[m
+ [m
+ #include "utils.h"[m
+ [m
+[32m+[m[32m#if TRACE_FALCO || TRACE_FALCO_RULES[m
+[32m+[m[32m#include "../falco-plugin/tracer_interface.h"[m
+[32m+[m[32m#endif[m
+[32m+[m
+ [m
+ string lua_on_event = "on_event";[m
+ string lua_print_stats = "print_stats";[m
+[36m@@ -275,16 +279,45 @@[m [mvoid falco_engine::syscalls_for_ruleset(std::vector<bool> &syscalls, const std::[m
+ [m
+ unique_ptr<falco_engine::rule_result> falco_engine::process_sinsp_event(sinsp_evt *ev, uint16_t ruleset_id)[m
+ {[m
+[32m+[m
+[32m+[m[32m#ifdef TRACE_FALCO[m
+[32m+[m	[32mset_func_start(FALCO_ENGINE_SHOULD_DROP_EVT);[m
+[32m+[m[32m#endif[m
+[32m+[m
+ 	if(should_drop_evt())[m
+ 	{[m
+[32m+[m
+[32m+[m	[32m#ifdef TRACE_FALCO[m
+[32m+[m		[32minc_counter(EVENT_DROPPED_CNT);[m
+[32m+[m		[32mset_func_end_cont(FALCO_ENGINE_SHOULD_DROP_EVT, EVENT_DROPPED_CNT, PROCESS_SINSP_EVENT);[m
+[32m+[m	[32m#endif[m
+[32m+[m
+ 		return unique_ptr<struct rule_result>();[m
+ 	}[m
+ [m
+[32m+[m[32m#ifdef TRACE_FALCO[m
+[32m+[m	[32mset_func_end(FALCO_ENGINE_SHOULD_DROP_EVT, PROCESS_SINSP_EVENT);[m
+[32m+[m[32m#endif[m
+[32m+[m
+[32m+[m[32m#ifdef TRACE_FALCO[m
+[32m+[m	[32mset_func_start(RULESET_FILTERS_RUN);[m
+[32m+[m[32m#endif[m
+[32m+[m
+ 	if(!m_sinsp_rules->run(ev, ruleset_id))[m
+ 	{[m
+[32m+[m
+[32m+[m	[32m#ifdef TRACE_FALCO[m
+[32m+[m		[32minc_counter(RULES_NOT_BROKEN_CNT);[m
+[32m+[m		[32mset_func_end_cont(RULESET_FILTERS_RUN, RULES_NOT_BROKEN_CNT, PROCESS_SINSP_EVENT);[m
+[32m+[m	[32m#endif[m
+[32m+[m
+ 		return unique_ptr<struct rule_result>();[m
+ 	}[m
+ [m
+[32m+[m[32m#ifdef TRACE_FALCO[m
+[32m+[m	[32mset_func_end(RULESET_FILTERS_RUN, PROCESS_SINSP_EVENT);[m
+[32m+[m[32m#endif[m
+[32m+[m
+ 	unique_ptr<struct rule_result> res(new rule_result());[m
+ [m
+ 	lua_getglobal(m_ls, lua_on_event.c_str());[m
+[36m@@ -522,3 +555,34 @@[m [mjson_event_filter_factory &falco_engine::json_factory()[m
+ [m
+ 	return *(m_json_factory.get());[m
+ }[m
+[32m+[m
+[32m+[m[32m#if TRACE_FALCO || TRACE_FALCO_RULES[m
+[32m+[m[32mvoid falco_engine::send_rules_names_engine()[m
+[32m+[m[32m{[m
+[32m+[m	[32mstart_rules_names_sending();[m
+[32m+[m
+[32m+[m	[32mfor(int i = 0; i < N_RULES; i++)[m
+[32m+[m	[32m{[m
+[32m+[m		[32mlua_getglobal(m_ls, lua_on_event.c_str());[m
+[32m+[m
+[32m+[m		[32mif(lua_isfunction(m_ls, -1))[m
+[32m+[m		[32m{[m
+[32m+[m			[32mlua_pushnumber(m_ls, i);[m
+[32m+[m			[32mif(lua_pcall(m_ls, 1, 3, 0) != 0)[m
+[32m+[m			[32m{[m
+[32m+[m				[32mcontinue;[m
+[32m+[m			[32m}[m
+[32m+[m[41m		[m
+[32m+[m			[32mconst char *p =  lua_tostring(m_ls, -3);[m
+[32m+[m			[32msend_rule_name(i, p);[m
+[32m+[m			[32mlua_pop(m_ls, 3);[m
+[32m+[m		[32m}[m
+[32m+[m		[32melse[m
+[32m+[m		[32m{[m
+[32m+[m			[32mthrow falco_exception("No function " + lua_on_event + " found in lua compiler module");[m
+[32m+[m		[32m}[m
+[32m+[m	[32m}[m
+[32m+[m
+[32m+[m	[32mend_rules_names_sending();[m
+[32m+[m[32m}[m
+[32m+[m[32m#endif[m
+[1mdiff --git a/userspace/engine/falco_engine.h b/userspace/engine/falco_engine.h[m
+[1mindex de7da08..b0b138e 100644[m
+[1m--- a/userspace/engine/falco_engine.h[m
+[1m+++ b/userspace/engine/falco_engine.h[m
+[36m@@ -233,6 +233,10 @@[m [mpublic:[m
+ 			      std::set<uint32_t> &syscalls,[m
+ 			      std::set<std::string> &tags,[m
+ 			      sinsp_filter* filter);[m
+[32m+[m[41m	[m
+[32m+[m[32m#if TRACE_FALCO || TRACE_FALCO_RULES[m
+[32m+[m	[32mvoid send_rules_names_engine();[m
+[32m+[m[32m#endif[m
+ [m
+ 	sinsp_filter_factory &sinsp_factory();[m
+ 	json_event_filter_factory &json_factory();[m
+[1mdiff --git a/userspace/engine/falco_engine_version.h b/userspace/engine/falco_engine_version.h[m
+[1mindex e77bd1a..805b99c 100644[m
+[1m--- a/userspace/engine/falco_engine_version.h[m
+[1m+++ b/userspace/engine/falco_engine_version.h[m
+[36m@@ -24,4 +24,4 @@[m [mlimitations under the License.[m
+ // This is the result of running "falco --list -N | sha256sum" and[m
+ // represents the fields supported by this version of falco. It's used[m
+ // at build time to detect a changed set of fields.[m
+[31m-#define FALCO_FIELDS_CHECKSUM "ceb069d9f9b2d4ebcc5de39bddc53b7af2e6b8f072edc293668fd6ac4e532413"[m
+[32m+[m[32m#define FALCO_FIELDS_CHECKSUM "8778e4bdb3d6ce4e3220e8a3911f46f7a07f9d48f9708fe911cac1d70bcfbf90"[m
+[1mdiff --git a/userspace/engine/ruleset.cpp b/userspace/engine/ruleset.cpp[m
+[1mindex 57ed0ef..9ba0dbc 100644[m
+[1m--- a/userspace/engine/ruleset.cpp[m
+[1m+++ b/userspace/engine/ruleset.cpp[m
+[36m@@ -19,6 +19,10 @@[m [mlimitations under the License.[m
+ [m
+ #include "ruleset.h"[m
+ [m
+[32m+[m[32m#if TRACE_FALCO || TRACE_FALCO_RULES[m
+[32m+[m[32m#include "../falco-plugin/tracer_interface.h"[m
+[32m+[m[32m#endif[m
+[32m+[m
+ using namespace std;[m
+ [m
+ falco_ruleset::falco_ruleset()[m
+[36m@@ -146,12 +150,31 @@[m [mbool falco_ruleset::ruleset_filters::run(gen_event *evt, uint32_t etag)[m
+ 		return false;[m
+ 	}[m
+ [m
+[32m+[m[32m#ifdef TRACE_FALCO_RULES[m
+[32m+[m	[32mset_current_tag(etag);[m
+[32m+[m[32m#endif[m
+[32m+[m
+ 	for (auto &wrap : *filters)[m
+ 	{[m
+[32m+[m
+[32m+[m	[32m#ifdef TRACE_FALCO_RULES[m
+[32m+[m		[32mset_rule_start();[m
+[32m+[m	[32m#endif[m
+[32m+[m
+ 		if(wrap->filter->run(evt))[m
+ 		{[m
+[32m+[m
+[32m+[m		[32m#ifdef TRACE_FALCO_RULES[m
+[32m+[m			[32mset_rule_end(true);[m
+[32m+[m		[32m#endif[m
+[32m+[m
+ 			return true;[m
+ 		}[m
+[32m+[m
+[32m+[m	[32m#ifdef TRACE_FALCO_RULES[m
+[32m+[m		[32mset_rule_end(false);[m
+[32m+[m	[32m#endif[m
+[32m+[m
+ 	}[m
+ [m
+ 	return false;[m
+[1mdiff --git a/userspace/falco/CMakeLists.txt b/userspace/falco/CMakeLists.txt[m
+[1mindex fb5b535..fd6748a 100644[m
+[1m--- a/userspace/falco/CMakeLists.txt[m
+[1m+++ b/userspace/falco/CMakeLists.txt[m
+[36m@@ -40,6 +40,17 @@[m [mtarget_include_directories(falco PUBLIC[m
+ 	"${CIVETWEB_INCLUDE_DIR}"[m
+ 	"${DRAIOS_DEPENDENCIES_DIR}/yaml-${DRAIOS_YAML_VERSION}/target/include")[m
+ [m
+[32m+[m[32mif(TRACE_FALCO)[m
+[32m+[m	[32madd_executable(falco[m
+[32m+[m		[32m../../../falco-plugin/tracer_interface.cpp[m
+[32m+[m		[32m../../../falco-plugin/tracer.cpp[m[41m	[m
+[32m+[m		[32m../../../falco-plugin/tracer_common.cpp[m
+[32m+[m		[32m../../../falco-plugin/tracer_msg_creator.cpp[m
+[32m+[m		[32m../../../falco-plugin/tsc.cpp)[m
+[32m+[m[41m	[m
+[32m+[m	[32minclude_directories("${PROJECT_SOURCE_DIR}/../falco-plugin")[m
+[32m+[m[32mendif()[m
+[32m+[m
+ target_link_libraries(falco falco_engine sinsp)[m
+ target_link_libraries(falco[m
+ 	"${LIBYAML_LIB}"[m
+[1mdiff --git a/userspace/falco/falco.cpp b/userspace/falco/falco.cpp[m
+[1mindex 0f13649..09f7fa0 100644[m
+[1m--- a/userspace/falco/falco.cpp[m
+[1m+++ b/userspace/falco/falco.cpp[m
+[36m@@ -55,6 +55,17 @@[m [mbool g_reopen_outputs = false;[m
+ bool g_restart = false;[m
+ bool g_daemonized = false;[m
+ [m
+[32m+[m[32m#if TRACE_FALCO || TRACE_FALCO_RULES[m
+[32m+[m[32m#include "../falco-plugin/tracer_interface.h"[m
+[32m+[m
+[32m+[m[32mfalco_engine *engine = NULL;[m
+[32m+[m
+[32m+[m[32mvoid send_rules_names_wrapper(int signum)[m
+[32m+[m[32m{[m
+[32m+[m	[32mengine->send_rules_names_engine();[m
+[32m+[m[32m}[m
+[32m+[m[32m#endif[m
+[32m+[m
+ //[m
+ // Helper functions[m
+ //[m
+[36m@@ -259,10 +270,31 @@[m [muint64_t do_inspect(falco_engine *engine,[m
+ 	while(1)[m
+ 	{[m
+ [m
+[32m+[m	[32m#ifdef TRACE_FALCO[m
+[32m+[m		[32mreset_last_counter();[m
+[32m+[m		[32mset_func_start(ANALYSIS_CYCLE);[m
+[32m+[m	[32m#endif[m
+[32m+[m
+[32m+[m	[32m#ifdef TRACE_FALCO[m
+[32m+[m		[32mset_func_start(SINSP_NEXT);[m
+[32m+[m	[32m#endif[m
+[32m+[m
+ 		rc = inspector->next(&ev);[m
+[32m+[m[41m	[m
+[32m+[m	[32m#ifdef TRACE_FALCO[m
+[32m+[m		[32mset_func_end(SINSP_NEXT, ANALYSIS_CYCLE);[m
+[32m+[m	[32m#endif[m
+[32m+[m
+[32m+[m	[32m#ifdef TRACE_FALCO[m
+[32m+[m		[32mset_func_start(STATS_FILE_WRITER_HANDLE);[m
+[32m+[m	[32m#endif[m
+ [m
+ 		writer.handle();[m
+ [m
+[32m+[m	[32m#ifdef TRACE_FALCO[m
+[32m+[m		[32mset_func_end(STATS_FILE_WRITER_HANDLE, ANALYSIS_CYCLE);[m
+[32m+[m	[32m#endif[m
+[32m+[m
+ 		if(g_reopen_outputs)[m
+ 		{[m
+ 			outputs->reopen_outputs();[m
+[36m@@ -276,10 +308,17 @@[m [muint64_t do_inspect(falco_engine *engine,[m
+ 		}[m
+ 		else if(rc == SCAP_TIMEOUT)[m
+ 		{[m
+[32m+[m		[32m#ifdef TRACE_FALCO[m
+[32m+[m			[32minc_counter(SCAP_TIMEOUT_CNT);[m
+[32m+[m			[32mset_func_end_cont(ANALYSIS_CYCLE, SCAP_TIMEOUT_CNT, ROOT);[m
+[32m+[m		[32m#endif[m
+ 			continue;[m
+ 		}[m
+ 		else if(rc == SCAP_EOF)[m
+ 		{[m
+[32m+[m		[32m#if TRACE_FALCO || TRACE_FALCO_RULES[m
+[32m+[m			[32mwrite_scap_file_stats();[m
+[32m+[m		[32m#endif[m
+ 			break;[m
+ 		}[m
+ 		else if(rc != SCAP_SUCCESS)[m
+[36m@@ -303,29 +342,72 @@[m [muint64_t do_inspect(falco_engine *engine,[m
+ 			}[m
+ 		}[m
+ [m
+[32m+[m	[32m#ifdef TRACE_FALCO[m
+[32m+[m		[32mset_func_start(SYSCALL_EVT_DROP_MGR_PROCESS_EVENT);[m
+[32m+[m	[32m#endif[m
+[32m+[m
+ 		if(!sdropmgr.process_event(inspector, ev))[m
+ 		{[m
+ 			result = EXIT_FAILURE;[m
+ 			break;[m
+ 		}[m
+ [m
+[32m+[m	[32m#ifdef TRACE_FALCO[m
+[32m+[m		[32mset_func_end(SYSCALL_EVT_DROP_MGR_PROCESS_EVENT, ANALYSIS_CYCLE);[m
+[32m+[m	[32m#endif[m
+[32m+[m
+[32m+[m	[32m#ifdef TRACE_FALCO[m
+[32m+[m		[32mset_func_start(EV_FALCO_CONSIDER);[m
+[32m+[m	[32m#endif[m
+[32m+[m
+ 		if(!ev->falco_consider() && !all_events)[m
+ 		{[m
+[32m+[m		[32m#ifdef TRACE_FALCO[m
+[32m+[m			[32minc_counter(EVENT_NOT_CONSIDERED_CNT);[m
+[32m+[m			[32mset_func_end_cont(EV_FALCO_CONSIDER, EVENT_NOT_CONSIDERED_CNT, ANALYSIS_CYCLE);[m
+[32m+[m			[32mset_func_end_cont(ANALYSIS_CYCLE, CYCLE_COMPLETED_CNT, ROOT);[m
+[32m+[m		[32m#endif[m
+ 			continue;[m
+ 		}[m
+[32m+[m	[32m#ifdef TRACE_FALCO[m
+[32m+[m		[32mset_func_end(EV_FALCO_CONSIDER, ANALYSIS_CYCLE);[m
+[32m+[m	[32m#endif[m
+ [m
+ 		// As the inspector has no filter at its level, all[m
+ 		// events are returned here. Pass them to the falco[m
+ 		// engine, which will match the event against the set[m
+ 		// of rules. If a match is found, pass the event to[m
+ 		// the outputs.[m
+[32m+[m	[32m#ifdef TRACE_FALCO[m
+[32m+[m		[32mset_func_start(PROCESS_SINSP_EVENT);[m
+[32m+[m	[32m#endif[m
+[32m+[m
+ 		unique_ptr<falco_engine::rule_result> res = engine->process_sinsp_event(ev);[m
+[32m+[m
+[32m+[m	[32m#ifdef TRACE_FALCO[m
+[32m+[m		[32mset_func_end(PROCESS_SINSP_EVENT, ANALYSIS_CYCLE);[m
+[32m+[m	[32m#endif[m
+[32m+[m[41m	[m
+ 		if(res)[m
+ 		{[m
+[32m+[m		[32m#ifdef TRACE_FALCO[m
+[32m+[m			[32mset_func_start(FALCO_OUTPUTS_HANDLE_EVENT);[m
+[32m+[m		[32m#endif[m
+[32m+[m
+ 			outputs->handle_event(res->evt, res->rule, res->source, res->priority_num, res->format);[m
+[32m+[m[41m			[m
+[32m+[m[41m			[m
+[32m+[m		[32m#ifdef TRACE_FALCO[m
+[32m+[m			[32mset_func_end(FALCO_OUTPUTS_HANDLE_EVENT, ANALYSIS_CYCLE);[m
+[32m+[m			[32minc_counter(CYCLE_COMPLETED_CNT);[m
+[32m+[m		[32m#endif[m
+ 		}[m
+ [m
+[31m-		num_evts++;[m
+[32m+[m	[32m#ifdef TRACE_FALCO[m
+[32m+[m		[32mset_func_end_cont(ANALYSIS_CYCLE, CYCLE_COMPLETED_CNT, ROOT);[m
+[32m+[m	[32m#endif[m
+[32m+[m
+[32m+[m		[32mnum_evts++;[m[41m	[m
+ 	}[m
+ [m
+ 	return num_evts;[m
+[36m@@ -397,7 +479,11 @@[m [mint falco_init(int argc, char **argv)[m
+ 	int result = EXIT_SUCCESS;[m
+ 	sinsp* inspector = NULL;[m
+ 	sinsp_evt::param_fmt event_buffer_format = sinsp_evt::PF_NORMAL;[m
+[32m+[m
+[32m+[m[32m#if !TRACE_FALCO && !TRACE_FALCO_RULES[m
+ 	falco_engine *engine = NULL;[m
+[32m+[m[32m#endif[m
+[32m+[m
+ 	falco_outputs *outputs = NULL;[m
+ 	syscall_evt_drop_mgr sdropmgr;[m
+ 	int op;[m
+[36m@@ -511,6 +597,11 @@[m [mint falco_init(int argc, char **argv)[m
+ 				disabled_rule_substrings.insert(substring);[m
+ 				break;[m
+ 			case 'e':[m
+[32m+[m
+[32m+[m			[32m#if TRACE_FALCO || TRACE_FALCO_RULES[m
+[32m+[m				[32mset_analysis_type(OFFLINE_ANALYSIS);[m
+[32m+[m			[32m#endif[m
+[32m+[m
+ 				trace_filename = optarg;[m
+ 				k8s_api = new string();[m
+ 				mesos_api = new string();[m
+[36m@@ -649,6 +740,10 @@[m [mint falco_init(int argc, char **argv)[m
+ 			}[m
+ [m
+ 		}[m
+[32m+[m[41m	[m
+[32m+[m	[32m#if TRACE_FALCO  || TRACE_FALCO_RULES[m
+[32m+[m		[32minit_tracer();[m
+[32m+[m	[32m#endif[m
+ [m
+ 		inspector = new sinsp();[m
+ 		inspector->set_buffer_format(event_buffer_format);[m
+[36m@@ -949,6 +1044,23 @@[m [mint falco_init(int argc, char **argv)[m
+ 			goto exit;[m
+ 		}[m
+ [m
+[32m+[m	[32m#if TRACE_FALCO || TRACE_FALCO_RULES[m
+[32m+[m		[32mif(get_analysis_type() == ONLINE_ANALYSIS)[m
+[32m+[m		[32m{[m
+[32m+[m			[32mif(signal(SEND_RULES_NAMES, send_rules_names_wrapper) == SIG_ERR)[m
+[32m+[m			[32m{[m
+[32m+[m				[32mfprintf(stderr, "An error occurred while setting SEND_RULES_NAMES signal handler.\n");[m
+[32m+[m				[32mresult = EXIT_FAILURE;[m
+[32m+[m				[32mgoto exit;[m
+[32m+[m			[32m}[m
+[32m+[m		[32m}[m[41m [m
+[32m+[m		[32melse[m
+[32m+[m		[32m{[m
+[32m+[m			[32mengine->send_rules_names_engine();[m
+[32m+[m		[32m}[m[41m	[m
+[32m+[m	[32m#endif[m
+[32m+[m
+[32m+[m
+ 		// If daemonizing, do it here so any init errors will[m
+ 		// be returned in the foreground process.[m
+ 		if (daemon && !g_daemonized) {[m
+[36m@@ -1239,5 +1351,10 @@[m [mint main(int argc, char **argv)[m
+ 		optind = 1;[m
+ 	}[m
+ [m
+[32m+[m[32m#if TRACE_FALCO || TRACE_FALCO_RULES[m
+[32m+[m	[32mclose_tracer();[m[41m	[m
+[32m+[m[32m#endif[m
+[32m+[m
+[32m+[m
+ 	return rc;[m
+ }[m

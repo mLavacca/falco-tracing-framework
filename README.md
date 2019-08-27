@@ -39,4 +39,4 @@ In order to have a meaningful graphical representation of the system, Falco-trac
 
 
 ## GSOC project
-This repository is part of a 2019 GSOC [project](https://summerofcode.withgoogle.com/projects/#5280508706029568).
+This repository is part of a 2019 GSOC [project](https://summerofcode.withgoogle.com/projects/#5280508706029568). [Here](https://github.com/mLavacca/falco-tracing-framework/issues/1) it is possible to find a summarization of my GSOC experience.

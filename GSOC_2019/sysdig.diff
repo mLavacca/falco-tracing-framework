@@ -1,52 +1,52 @@
-[1mdiff --git a/userspace/libsinsp/CMakeLists.txt b/userspace/libsinsp/CMakeLists.txt[m
-[1mindex ec454de7..4bac3120 100644[m
-[1m--- a/userspace/libsinsp/CMakeLists.txt[m
-[1m+++ b/userspace/libsinsp/CMakeLists.txt[m
-[36m@@ -33,6 +33,8 @@[m [mif(NOT WIN32 AND NOT APPLE)[m
- 	include_directories("${CMAKE_CURRENT_BINARY_DIR}")[m
- endif()[m
- [m
-[32m+[m[32minclude_directories("${PROJECT_SOURCE_DIR}/../falco-plugin")[m
-[32m+[m
- if(NOT WIN32)[m
- 	include_directories("${CURL_INCLUDE_DIR}")[m
- endif()[m
-[36m@@ -116,6 +118,11 @@[m [mset(SINSP_SOURCES[m
- 	user_event.cpp[m
- 	value_parser.cpp[m
- 	viewinfo.cpp[m
-[32m+[m	[32m../../../falco-plugin/tracer_interface.cpp[m
-[32m+[m	[32m../../../falco-plugin/tracer.cpp[m[41m	[m
-[32m+[m	[32m../../../falco-plugin/tracer_common.cpp[m
-[32m+[m	[32m../../../falco-plugin/tracer_msg_creator.cpp[m
-[32m+[m	[32m../../../falco-plugin/tsc.cpp[m
- )[m
- [m
- if(WIN32)[m
-[1mdiff --git a/userspace/libsinsp/gen_filter.cpp b/userspace/libsinsp/gen_filter.cpp[m
-[1mindex 3b07a127..4e5b80c1 100644[m
-[1m--- a/userspace/libsinsp/gen_filter.cpp[m
-[1m+++ b/userspace/libsinsp/gen_filter.cpp[m
-[36m@@ -22,6 +22,10 @@[m [malong with sysdig.  If not, see <http://www.gnu.org/licenses/>.[m
- #include "sinsp.h"[m
- #include "sinsp_int.h"[m
- [m
-[32m+[m[32m#if TRACE_FALCO || TRACE_FALCO_RULES[m
-[32m+[m[32m#include "../falco-plugin/tracer_interface.h"[m
-[32m+[m[32m#endif[m
-[32m+[m
- gen_event::gen_event()[m
- {[m
- }[m
-[36m@@ -97,6 +101,11 @@[m [mbool gen_event_filter_expression::compare(gen_event *evt)[m
- [m
- 		if(j == 0)[m
- 		{[m
-[32m+[m
-[32m+[m		[32m#ifdef TRACE_FALCO_RULES[m
-[32m+[m			[32mset_current_rule(chk->get_check_id());[m
-[32m+[m		[32m#endif[m
-[32m+[m
- 			switch(chk->m_boolop)[m
- 			{[m
- 			case BO_NONE:[m
+diff --git a/userspace/libsinsp/CMakeLists.txt b/userspace/libsinsp/CMakeLists.txt
+index ec454de7..4bac3120 100644
+--- a/userspace/libsinsp/CMakeLists.txt
++++ b/userspace/libsinsp/CMakeLists.txt
+@@ -33,6 +33,8 @@ if(NOT WIN32 AND NOT APPLE)
+ 	include_directories("${CMAKE_CURRENT_BINARY_DIR}")
+ endif()
+ 
++include_directories("${PROJECT_SOURCE_DIR}/../falco-plugin")
++
+ if(NOT WIN32)
+ 	include_directories("${CURL_INCLUDE_DIR}")
+ endif()
+@@ -116,6 +118,11 @@ set(SINSP_SOURCES
+ 	user_event.cpp
+ 	value_parser.cpp
+ 	viewinfo.cpp
++	../../../falco-plugin/tracer_interface.cpp
++	../../../falco-plugin/tracer.cpp	
++	../../../falco-plugin/tracer_common.cpp
++	../../../falco-plugin/tracer_msg_creator.cpp
++	../../../falco-plugin/tsc.cpp
+ )
+ 
+ if(WIN32)
+diff --git a/userspace/libsinsp/gen_filter.cpp b/userspace/libsinsp/gen_filter.cpp
+index 3b07a127..4e5b80c1 100644
+--- a/userspace/libsinsp/gen_filter.cpp
++++ b/userspace/libsinsp/gen_filter.cpp
+@@ -22,6 +22,10 @@ along with sysdig.  If not, see <http://www.gnu.org/licenses/>.
+ #include "sinsp.h"
+ #include "sinsp_int.h"
+ 
++#if TRACE_FALCO || TRACE_FALCO_RULES
++#include "../falco-plugin/tracer_interface.h"
++#endif
++
+ gen_event::gen_event()
+ {
+ }
+@@ -97,6 +101,11 @@ bool gen_event_filter_expression::compare(gen_event *evt)
+ 
+ 		if(j == 0)
+ 		{
++
++		#ifdef TRACE_FALCO_RULES
++			set_current_rule(chk->get_check_id());
++		#endif
++
+ 			switch(chk->m_boolop)
+ 			{
+ 			case BO_NONE:

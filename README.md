@@ -1,6 +1,9 @@
 
 # Falco tracing framework
 
+## GSOC 2019 project
+This repository is part of a GSOC 2019 [project](https://summerofcode.withgoogle.com/projects/#5280508706029568). [Here](https://github.com/mLavacca/falco-tracing-framework/issues/1) it is possible to find a summarization of my GSOC experience.
+
 ## Abstract
 The effectiveness of Falco relies on the assumption that it is able to detect all the events in the system, analyze them and produce an output accordingly, therefore a major requirement that this kind of system is required to satisfy, is the capacity to detect all the events, without missing a single one of them. In order to ensure this kind of reliability, it is necessary that Falco is efficient and not affected by performance constraints that can inficiate its effectiveness under both low and high load conditions.
 
@@ -38,7 +41,3 @@ In order to have a meaningful graphical representation of the system, Falco-trac
 cd falco-trace
 ./compile.sh
 ```
-
-
-## GSOC project
-This repository is part of a 2019 GSOC [project](https://summerofcode.withgoogle.com/projects/#5280508706029568). [Here](https://github.com/mLavacca/falco-tracing-framework/issues/1) it is possible to find a summarization of my GSOC experience.

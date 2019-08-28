@@ -102,28 +102,7 @@ rules_breakers:
     rule_id: 33
   - rule: Unexpected K8s NodePort Connection
     rule_id: 34
-  - rule:
-    rule_id:
-  - rule:
-    rule_id:
-  - rule:
-    rule_id:
-  - rule:
-    rule_id:
-  - rule:
-    rule_id:
-  - rule:
-    rule_id:
-  - rule:
-    rule_id:
-  - rule:
-    rule_id:
-  - rule:
-    rule_id:
-  - rule:
-    rule_id:
-
-  
+ 
 breaking_profiles:
   - name: flat
     duration: 5
